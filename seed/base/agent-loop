@@ -1,0 +1,20 @@
+#!/bin/sh
+set -eu
+
+K=/agent/kanban
+
+while :; do
+  task=$(ls -1tr "$K"/todo/*.md 2>/dev/null | head -1 || true)
+  [ -n "$task" ] || break
+
+  name=$(basename "$task")
+  mv "$task" "$K/in-progress/$name" 2>/dev/null || continue
+
+  echo "=== $name"
+  docker-agent run --exec /agent/agent.yaml --yolo "$(cat "$K/in-progress/$name")" || true
+
+  if [ -f "$K/in-progress/$name" ]; then
+    printf '\n## Result\nAgent exited without filing the task.\n' >> "$K/in-progress/$name"
+    mv "$K/in-progress/$name" "$K/blocked/$name"
+  fi
+done
