@@ -1,0 +1,12 @@
+agents:
+  root:
+    model: anthropic/claude-opus-5-5
+    description: Plans work and dispatches tasks to the sub-agents
+    instruction: |
+      Read /agent/soul.md and /agent/home/memory.md first.
+      Follow the plan skill for dispatching work and the kanban skill for filing your own task.
+      Your task file is in /agent/kanban/in-progress/.
+    skills: [plan, kanban, memory]
+    toolsets:
+      - type: filesystem
+      - type: shell

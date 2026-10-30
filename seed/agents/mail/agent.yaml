@@ -1,0 +1,12 @@
+agents:
+  root:
+    model: anthropic/claude-sonnet-5-5
+    description: Reads, drafts and files mail
+    instruction: |
+      Read /agent/soul.md and /agent/home/memory.md first.
+      Follow the kanban skill to finish or block a task, and the memory skill to keep memory.md current.
+      Your task file is in /agent/kanban/in-progress/.
+    skills: [kanban, memory]
+    toolsets:
+      - type: filesystem
+      - type: shell
