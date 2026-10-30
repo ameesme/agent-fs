@@ -46,6 +46,62 @@ def test_newtask():
         assert not list(pathlib.Path(tmp).glob(".*.tmp")), "temp file left behind"
 
 
+VALID = """---
+id: task-1
+created: 2026-10-30T10:00:00Z
+created_by: code
+priority: normal
+parent: task-0
+---
+# fix the parser
+
+Do the thing.
+"""
+
+
+def checktask(body, name="task-1.md", folder="todo"):
+    with tempfile.TemporaryDirectory() as tmp:
+        task = pathlib.Path(tmp, folder, name)
+        task.parent.mkdir()
+        task.write_text(body)
+        r = subprocess.run(["python3", str(HERE / "seed/base/checktask"), str(task)],
+                           text=True, capture_output=True)
+        return r.returncode, r.stderr
+
+
+def test_checktask():
+    assert checktask(VALID) == (0, "")
+    assert checktask(VALID.replace("task-1\n", "task-9\n"))[0] == 1, "id must match filename"
+    assert checktask(VALID, name="notes.md")[0] == 1
+    assert checktask(VALID.replace("priority: normal", "priority: urgent"))[0] == 1
+    assert checktask(VALID.replace("created: 2026-10-30T10:00:00Z", "created: yesterday"))[0] == 1
+    assert checktask(VALID.replace("priority: normal", "priority: normal\nstatus: done"))[0] == 1
+    assert checktask(VALID.replace("created_by: code\n", ""))[0] == 1
+    assert checktask(VALID.replace("---\n# fix", "# fix"))[0] == 1, "unclosed frontmatter"
+    assert checktask(VALID.replace("# fix the parser", "fix the parser"))[0] == 1
+    assert checktask("# just a heading\n")[0] == 1
+    assert checktask(VALID.replace("id: task-1", "id task-1"))[0] == 1
+
+    # a result section is only required once the task is filed
+    assert checktask(VALID, folder="done")[0] == 1
+    assert checktask(VALID + "\n## Result\n", folder="done")[0] == 1, "empty result"
+    assert checktask(VALID + "\n## Result\nShipped it.\n", folder="blocked") == (0, "")
+
+    code, err = checktask(VALID.replace("created_by: code", "created_by:"))
+    assert code == 1 and "created_by" in err
+
+
+def test_newtask_output_is_valid():
+    with tempfile.TemporaryDirectory() as tmp:
+        out = subprocess.run(["sh", str(HERE / "seed/base/newtask"), tmp, "a title"],
+                             input="body\n", text=True, capture_output=True,
+                             env={"PATH": "/usr/bin:/bin"})
+        assert out.returncode == 0, out.stderr
+        check = subprocess.run(["python3", str(HERE / "seed/base/checktask"), out.stdout.strip()],
+                               text=True, capture_output=True)
+        assert check.returncode == 0, check.stderr
+
+
 def test_mounts():
     with tempfile.TemporaryDirectory() as tmp:
         w = load_watcher(fake_data(pathlib.Path(tmp)))
@@ -80,6 +136,8 @@ def test_env_is_scoped():
 
 if __name__ == "__main__":
     test_newtask()
+    test_checktask()
+    test_newtask_output_is_valid()
     test_mounts()
     test_env_is_scoped()
     print("ok")

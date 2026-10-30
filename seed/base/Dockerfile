@@ -11,8 +11,8 @@ RUN case "$(uname -m)" in \
       "https://github.com/docker/docker-agent/releases/latest/download/docker-agent-linux-$arch" \
     && chmod +x /usr/local/bin/docker-agent
 
-COPY agent-loop newtask /usr/local/bin/
-RUN chmod +x /usr/local/bin/agent-loop /usr/local/bin/newtask
+COPY agent-loop newtask checktask /usr/local/bin/
+RUN chmod +x /usr/local/bin/agent-loop /usr/local/bin/newtask /usr/local/bin/checktask
 
 ENV HOME=/agent/home \
     DOCKER_AGENT_NO_SETUP=1

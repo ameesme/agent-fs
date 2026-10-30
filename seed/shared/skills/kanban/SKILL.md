@@ -11,7 +11,8 @@ status, so you change status by moving the file. Never write a status field in t
 ## Finishing
 
 1. Append a `## Result` section to the task file: what you did, what you changed, where it lives.
-2. `mv /agent/kanban/in-progress/<task>.md /agent/kanban/done/<task>.md`
+2. `checktask /agent/kanban/in-progress/<task>.md` — it prints nothing when the file is fine.
+3. `mv /agent/kanban/in-progress/<task>.md /agent/kanban/done/<task>.md`
 
 ## Blocking
 
@@ -28,6 +29,16 @@ echo "Pull the latest main and rerun the test suite." | newtask /shared/requests
 
 `newtask` writes atomically (`.tmp` then rename) and prints the file it created. The orchestrator
 decides who picks it up.
+
+## Keeping the file valid
+
+`checktask <file>` is the judge. It wants: the frontmatter block first, `id` matching the filename,
+`created`, `created_by` and `priority` present, no other keys, a `# title` heading, and a non-empty
+`## Result` once the file sits in `done/` or `blocked/`.
+
+Append to the task file, don't rewrite it. Never touch the frontmatter — not the id, not `created`,
+and never add a `status` key, because the folder is the status. A task that lands in `done/` or
+`blocked/` broken gets moved back to `blocked/` with the errors appended, so you get to fix it.
 
 ## Rules
 

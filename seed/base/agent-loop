@@ -17,4 +17,11 @@ while :; do
     printf '\n## Result\nAgent exited without filing the task.\n' >> "$K/in-progress/$name"
     mv "$K/in-progress/$name" "$K/blocked/$name"
   fi
+
+  filed=$(ls "$K"/*/"$name" 2>/dev/null | head -1 || true)
+  if [ -n "$filed" ] && ! errs=$(checktask "$filed" 2>&1); then
+    grep -q '^## Result' "$filed" || printf '\n## Result\n' >> "$filed"
+    printf 'Task file failed validation:\n%s\n' "$errs" >> "$filed"
+    [ "$filed" = "$K/blocked/$name" ] || mv "$filed" "$K/blocked/$name"
+  fi
 done

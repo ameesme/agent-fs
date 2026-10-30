@@ -46,6 +46,10 @@ docker compose exec agents docker logs agent-code
   `docker-agent run --exec`, repeat until `todo/` is empty, then exit. No idle containers.
 - **agent** finishes a task by filling in `## Result` and moving the file to `done/` (or `blocked/`),
   per the `kanban` skill.
+- **`checktask`** validates a task file: frontmatter structure, `id` matching the filename, known
+  keys only, a `# title`, and a filled-in `## Result` once it is in `done/` or `blocked/`. `newtask`
+  refuses to create a file that fails it, and `agent-loop` sends a task an agent mangled back to
+  `blocked/` with the errors appended.
 
 Task files, kanban rules and the mount table are all in the spec. The short version: an agent can
 write its own `home/`, its own `in-progress|blocked|done`, `/shared/files` and `/shared/requests`,
@@ -56,7 +60,7 @@ and nothing else.
 ```
 Dockerfile compose.yaml entrypoint.sh watcher.py   # the main container
 seed/                                              # copied into /data on first boot
-├── base/{Dockerfile,agent-loop,newtask}           # agent-base
+├── base/{Dockerfile,agent-loop,newtask,checktask}  # agent-base
 ├── agents/{orchestrator,code,mail}/               # Dockerfile, soul.md, agent.yaml, skills/
 └── shared/skills/{kanban,memory}/SKILL.md
 ```

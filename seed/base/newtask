@@ -22,4 +22,11 @@ tmp="$dir/.$id.md.tmp"
 } > "$tmp"
 
 mv "$tmp" "$dir/$id.md"
+
+if ! python3 "$(dirname "$0")/checktask" "$dir/$id.md"; then
+  rm -f "$dir/$id.md"
+  echo "newtask: refused to write an invalid task file" >&2
+  exit 1
+fi
+
 echo "$dir/$id.md"
