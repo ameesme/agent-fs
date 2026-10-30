@@ -1,0 +1,14 @@
+services:
+  agents:
+    build: .
+    privileged: true
+    env_file:
+      - path: .env
+        required: false
+    volumes:
+      - agents-data:/data
+    ports:
+      - "8080:8080"
+
+volumes:
+  agents-data:
