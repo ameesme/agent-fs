@@ -11,7 +11,7 @@ while :; do
   mv "$task" "$K/in-progress/$name" 2>/dev/null || continue
 
   echo "=== $name"
-  docker-agent run --exec /agent/agent.yaml --yolo "$(cat "$K/in-progress/$name")" || true
+  docker-agent run --exec /agent/agent.yaml --yolo -- "$(cat "$K/in-progress/$name")" || true
 
   if [ -f "$K/in-progress/$name" ]; then
     printf '\n## Result\nAgent exited without filing the task.\n' >> "$K/in-progress/$name"

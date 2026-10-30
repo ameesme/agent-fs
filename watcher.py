@@ -83,10 +83,12 @@ def build_images():
 def fix_owner(name):
     uid = docker("image", "inspect", "-f", "{{.Config.User}}", f"agent-{name}").stdout.strip()
     uid = uid or "0"
-    for sub in ("home", "kanban"):
-        path = AGENTS / name / sub
-        if path.stat().st_uid != int(uid):
-            subprocess.run(["chown", "-R", f"{uid}:{uid}", str(path)])
+    agent = AGENTS / name
+    # tasks dropped in by root have to end up writable by the agent that claims them
+    subprocess.run(["chown", "-R", f"{uid}:{uid}", str(agent / "kanban")])
+    home = agent / "home"
+    if home.stat().st_uid != int(uid):
+        subprocess.run(["chown", "-R", f"{uid}:{uid}", str(home)])
 
 
 def skill_mounts(name):

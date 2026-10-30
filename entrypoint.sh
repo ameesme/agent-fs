@@ -15,6 +15,8 @@ for a in /data/agents/*/; do
   [ -f "$a/home/memory.md" ] || echo "# memory" > "$a/home/memory.md"
 done
 mkdir -p /data/shared/files /data/shared/skills-proposed
+# every agent runs under its own uid, so the handoff dirs are shared like /tmp
+chmod 1777 /data/shared/files /data/shared/skills-proposed /data/agents/orchestrator/kanban/backlog
 
 git config --global --add safe.directory /data
 if [ ! -d /data/.git ]; then
