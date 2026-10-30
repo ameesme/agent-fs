@@ -22,6 +22,11 @@ curl -X POST localhost:8080 -H 'x-task-title: say hi' --data 'Write hello.txt in
 That writes a task into the orchestrator's `todo/`. The watcher notices within a couple of seconds
 and starts the orchestrator container, which plans and hands work to `code` or `mail`.
 
+Without a key the plumbing still runs: the task gets claimed, the model call fails, and the loop
+files the task in `blocked/`. `docker compose exec agents docker run --rm --entrypoint docker-agent
+agent-code doctor /agent/agent.yaml` says which credentials an agent is missing. The host-side
+checks on the mount table and `newtask` are `python3 test_agent_fs.py`.
+
 Poke around:
 
 ```sh
