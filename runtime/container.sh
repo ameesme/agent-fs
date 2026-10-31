@@ -1,5 +1,5 @@
 #!/bin/sh
-# Start one agent with its own credentials, files and skills mounted in place.
+# Start one agent with shared defaults and its own credentials, files and skills.
 # Both main's chat server and sub-agent workers use this setup so permissions
 # and mounts stay consistent wherever an agent is started.
 set -eu
@@ -26,6 +26,9 @@ chown "$uid:$gid" "$agent/home/memory.md"
 
 docker rm -f "$container" >/dev/null 2>&1 || true
 set -- -d --name "$container" -e "AGENT_NAME=$name"
+if [ -f /data/shared/.env ]; then
+    set -- "$@" --env-file /data/shared/.env
+fi
 if [ -f "$agent/.env" ]; then
     set -- "$@" --env-file "$agent/.env"
 fi

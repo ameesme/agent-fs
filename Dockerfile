@@ -12,7 +12,7 @@ COPY docker/agent.Dockerfile /agent-base/Dockerfile
 COPY runtime/agent-loop.sh runtime/newtask.sh /agent-base/
 COPY runtime/newtask.sh /usr/local/bin/newtask
 COPY docker/data.gitignore /data/.gitignore
-COPY skills /data/shared/skills
+COPY shared/skills /data/shared/skills
 RUN chmod +x /usr/local/bin/entrypoint.sh /usr/local/bin/agent-watch /usr/local/bin/agent-container /usr/local/bin/newtask /usr/local/bin/chat
 
 ENTRYPOINT ["entrypoint.sh"]

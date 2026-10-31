@@ -9,6 +9,9 @@ agents when work arrives. Main delegates work and reviews the results.
 
 - Install Docker
 - Clone this repo
+- Copy `shared/.env.example` to `shared/.env`
+- Add your LLM provider's API key, e.g. `OPENAI_API_KEY=your-api-key`.
+  See [Docker Agent's model setup][llm] for other providers
 - Run `docker compose up -d --build` to start the main agent
 - Run `docker compose exec agents chat` to open the built-in CLI bridge to chat
 
@@ -42,6 +45,16 @@ cp data/agents/code/.env.example data/agents/code/.env
 
 An agent needs `agent.yaml` and a `Dockerfile`. Everything else is optional.
 
+## Shared
+
+- `shared/.env`: credentials for all agents; an agent's own `.env` overrides
+  shared values. Both are ignored by Git
+- `shared/skills/`: common skills; an agent's own skills override shared skills
+  with the same name
+- Shared files, requests and proposed skills also live here and stay ignored
+  by Git
+- Restart agentFS after changing main's credentials or shared skills
+
 ## Bridges
 
 By default agentFS uses the CLI-bridge, allowing you to chat with the main agent
@@ -55,4 +68,4 @@ optionally restart the container.
 
 [MIT](LICENSE).
 
-[credentials]: https://docs.docker.com/ai/docker-agent/guides/secrets/
+[llm]: https://docs.docker.com/ai/docker-agent/getting-started/set-up-a-model/

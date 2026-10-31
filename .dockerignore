@@ -6,3 +6,6 @@
 !**/.env.example
 .DS_Store
 /data/
+/shared/files/
+/shared/requests/
+/shared/skills-proposed/

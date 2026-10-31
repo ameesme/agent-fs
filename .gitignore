@@ -15,3 +15,6 @@
 !/data/agents/main/agent.yaml
 !/data/agents/main/.env.example
 !/data/agents/main/skills/
+/shared/*
+!/shared/.env.example
+!/shared/skills/
