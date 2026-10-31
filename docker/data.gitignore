@@ -3,7 +3,7 @@
 !.gitignore
 !agents/*/Dockerfile
 !agents/*/soul.md
-!agents/*/agent.yaml
+!agents/*/agent.json
 !agents/*/.env.example
 !agents/*/skills/**
 !agents/*/home/memory.md

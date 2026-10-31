@@ -1,0 +1,14 @@
+{
+  "description": "Reads, drafts and files mail",
+  "instruction": "Read /agent/soul.md and /agent/home/memory.md first.\nFollow the kanban skill to finish or block a task, and the memory skill to keep memory.md current.\nYour task file is in /agent/kanban/in-progress/.",
+  "tools": [
+    "read",
+    "bash",
+    "edit",
+    "write"
+  ],
+  "skills": [
+    "kanban",
+    "memory"
+  ]
+}

@@ -1,72 +1,54 @@
 # agentFS
 
-Folders hold agents. Markdown files hold tasks. Docker Agent does the work.
+Folders hold agents. Markdown files hold tasks. Pi does the work.
 
 Tasks move through `todo → in-progress → done` or `blocked`. A shell loop starts
-agents when work arrives. Main delegates work and reviews the results.
+agents in Docker containers when work arrives. Main delegates work and reports results.
 
 ## Getting started
 
-- Install Docker
-- Clone this repo
+- Install Docker and clone this repo
 - Copy `data/shared/.env.example` to `data/shared/.env`
-- Add your LLM provider's API key, e.g. `OPENAI_API_KEY=your-api-key`.
-  See [Docker Agent's model setup][llm] for other providers
-- Run `docker compose up -d --build` to start the main agent
-- Run `docker compose exec agents chat` to open the built-in CLI bridge to chat
+- Add your provider's API key, e.g. `OPENAI_API_KEY=your-api-key`.
+  See [Pi's provider setup][llm] for other providers
+- Run `docker compose up -d --build`
+- Run `docker compose exec agents chat` to open Pi's native CLI
 
-### What's included
+Two demo agents are included: **main** coordinates tasks; **poem** writes poems.
+Ask: `Ask poem to write a short poem about a quiet morning.` Main dispatches it
+and reports back when it finishes. You can keep chatting while poem works.
 
-Two agents are included in `data/agents/` as a demo-setup:
-
-- **main**: the primary agent that you can chat with, which also coordinates
-  tasks
-- **poems**: writes poems
-
-### Instructions
-
-Ask: `Ask poem to write a short poem about a quiet morning.` Main will create a
-task for poem, waits for it to finish, and replies with the poem.
-`/reset` starts a fresh conversation; `/quit` or Ctrl-D exits.
-
-It is really easy to introduce new agents yourself, see
-[Add an agent](#add-an-agent).
+Use Pi's `/help` for commands. Resume with
+`docker compose exec agents chat --continue`, or choose a session with `--resume`.
 
 ## Add an agent
 
-Copy an [example folder](agents) into `data/agents/` or create your own, then
-optionally configure its `.env`, `soul.md` and skills. The runtime automatically
-creates a workspace, memory and task folders, and rebuilds the image when they
-change.
+Copy an [example folder](agents) into `data/agents/`:
 
 ```sh
 cp -R agents/code data/agents/
 cp data/agents/code/.env.example data/agents/code/.env
 ```
 
-An agent needs `agent.yaml` and a `Dockerfile`. Everything else is optional.
+An agent needs `agent.json` and a `Dockerfile`. Everything else is optional.
+The JSON defines its instructions, tools, skills and optional model. Set `PI_MODEL`
+in `.env` to override the model. Customize its `soul.md` and skills as needed.
+The runtime creates its workspace, memory and task folders, and builds its image.
 
 ## Shared
 
-- `data/shared/.env`: credentials for all agents; an agent's own `.env`
-  overrides shared values. Both are ignored by Git.
-- `data/shared/skills/`: common skills; an agent's own skills override shared
-  skills with the same name.
-- Shared files, requests and proposed skills also live here and stay ignored
-  by Git.
-- Restart agentFS after changing main's credentials or shared skills.
+- `data/shared/.env`: credentials for all agents; an agent's own `.env` overrides them
+- `data/shared/skills/`: common skills; an agent's own skills override matching names
+- Shared files, requests and proposed skills also live here and stay ignored by Git
+- Restart agentFS after changing main's credentials or shared skills
 
 ## Bridges
 
-By default agentFS uses the CLI-bridge, allowing you to chat with the main agent
-over your terminal. You can however easily introduce other bridges, by
-configuring a `BRIDGE_COMMAND`.
-
-**Telegram**
-Set `BRIDGE_COMMAND=sh /bridges/telegram.sh`, `TELEGRAM_BOT_TOKEN` and
-`TELEGRAM_CHAT_IDS` in the root `.env`, then run `docker compose up -d` or
-optionally restart the container.
+The CLI opens Pi's terminal UI. For Telegram, set
+`BRIDGE_COMMAND=sh /bridges/telegram.sh`, `TELEGRAM_BOT_TOKEN` and
+`TELEGRAM_CHAT_IDS` in the root `.env`, then run `docker compose up -d`.
+Each Telegram chat has its own conversation; `/new` or `/reset` starts a fresh one.
 
 [MIT](LICENSE).
 
-[llm]: https://docs.docker.com/ai/docker-agent/getting-started/set-up-a-model/
+[llm]: https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/providers.md

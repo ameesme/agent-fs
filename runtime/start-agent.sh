@@ -1,6 +1,6 @@
 #!/bin/sh
 # Start one agent with shared defaults and its own credentials, files and skills.
-# Both main's chat server and sub-agent workers use this setup so permissions
+# Both main's chat environment and sub-agent workers use this setup so permissions
 # and mounts stay consistent wherever an agent is started.
 set -eu
 
@@ -33,7 +33,7 @@ if [ -f "$agent/.env" ]; then
     set -- "$@" --env-file "$agent/.env"
 fi
 set -- "$@" -v "$agent/home:/agent/home" \
-    -v "$agent/agent.yaml:/agent/agent.yaml:ro"
+    -v "$agent/agent.json:/agent/agent.json:ro"
 if [ -f "$agent/soul.md" ]; then
     set -- "$@" -v "$agent/soul.md:/agent/soul.md:ro"
 fi
@@ -59,11 +59,9 @@ for skill in /data/shared/skills/* "$agent"/skills/*; do
 done
 
 if [ "$name" = main ]; then
-    set -- "$@" -p 127.0.0.1:8083:8083 \
-        -e "AGENT_FS_CHAT_KEY=$(cat /run/agent-fs/chat-key)" --entrypoint docker-agent
-    docker run "$@" "$image" serve chat /agent/agent.yaml --agent root \
-        --listen 0.0.0.0:8083 --api-key-env AGENT_FS_CHAT_KEY --safety autonomous \
-        --conversations-max 32 --conversation-ttl 24h
+    # CLI and bridge invocations share main's mounts but keep separate Pi sessions.
+    set -- "$@" --entrypoint sleep
+    docker run "$@" "$image" infinity
 else
     docker run "$@" "$image"
 fi

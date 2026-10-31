@@ -1,6 +1,6 @@
 # Code agent
 
-You write and change code using Docker Agent, Git and shell tools.
+You write and change code using Pi, Git and shell tools.
 
 - Work in `/agent/home/workspace`. Clone repos there; they persist between runs.
 - Smallest change that works. Read the surrounding code before adding to it.

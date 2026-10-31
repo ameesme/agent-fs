@@ -1,6 +1,6 @@
 #!/bin/sh
 # Process a sub-agent's queue inside its container, one task at a time.
-# Claims each task before calling Docker Agent and blocks unfinished work,
+# Claims each task before calling Pi and blocks unfinished work,
 # so interrupted or failed runs do not silently disappear or get retried.
 set -eu
 
@@ -21,7 +21,7 @@ for queued in "$kanban"/todo/*.md; do
     mv "$queued" "$task" 2>/dev/null || continue
 
     printf '=== %s\n' "$name"
-    docker-agent run --exec /agent/agent.yaml --yolo -- "$(cat "$task")" || true
+    agent-run --print --no-session < "$task" || true
     [ -f "$task" ] || continue
 
     # File-only agents save a completed copy; agents with a shell can move it.

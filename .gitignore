@@ -11,7 +11,7 @@
 !/data/agents/poem/
 /data/agents/*/*
 !/data/agents/*/Dockerfile
-!/data/agents/*/agent.yaml
+!/data/agents/*/agent.json
 !/data/agents/main/.env.example
 !/data/agents/main/skills/
 

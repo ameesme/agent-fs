@@ -1,12 +1,11 @@
 #!/bin/sh
 # Forward allowed Telegram messages to main and send its replies back.
-# Uses the same chat server as the CLI, with a conversation per Telegram chat,
+# Uses a saved Pi session per Telegram chat,
 # so Telegram stays an optional way to talk to main.
 set -eu
 : "${TELEGRAM_BOT_TOKEN:?Set TELEGRAM_BOT_TOKEN}"
 allowed=$(printf '%s' "${TELEGRAM_CHAT_IDS:-}" | tr -d '[:space:]')
-chat_url=http://127.0.0.1:8083/v1/chat/completions
-state=/run/telegram
+state=/data/.telegram
 mkdir -p "$state"
 offset=0
 
@@ -21,7 +20,7 @@ send() {
     while [ "$send_start" -lt "$send_length" ]; do
         send_payload=$(jq -cn --arg chat "$1" --arg text "$2" --argjson start "$send_start" \
             '{chat_id:$chat, text:$text[$start:($start+4000)]}')
-        telegram sendMessage "$send_payload" >/dev/null || true
+        telegram sendMessage "$send_payload" >/dev/null || return 1
         send_start=$((send_start + 4000))
     done
 }
@@ -47,17 +46,28 @@ while :; do
         case "$text" in
             /reset|/new)
                 printf '%s\n' "$((reset + 1))" > "$state/$chat.reset"
-                send "$chat" 'fresh conversation'
+                send "$chat" 'fresh conversation' || true
                 continue ;;
         esac
-        send "$chat" 'on it'
-        body=$(jq -cn --arg text "$text" '{model:"root",messages:[{role:"user",content:$text}]}')
-        if reply=$(curl -fsS --max-time 1260 "$chat_url" -H 'content-type: application/json' \
-            -H "authorization: Bearer $(cat /run/agent-fs/chat-key)" \
-            -H "x-conversation-id: telegram-$chat-$reset" --data "$body"); then
-            send "$chat" "$(printf '%s' "$reply" | jq -r '.choices[0].message.content // "(empty reply)"')"
+        send "$chat" 'on it' || true
+        if reply=$(printf '%s' "$text" | chat-main "telegram-$chat-$reset"); then
+            send "$chat" "$reply" || true
         else
-            send "$chat" 'main unreachable'
+            send "$chat" 'main unreachable' || true
+        fi
+    done
+    for message in /run/agent-fs/outbox/telegram-*/*.txt; do
+        [ -f "$message" ] || continue
+        conversation=${message%/*}
+        conversation=${conversation##*/}
+        chat=${conversation#telegram-}
+        chat=${chat%-*}
+        case ",$allowed," in
+            *,$chat,*) ;;
+            *) continue ;;
+        esac
+        if send "$chat" "$(cat "$message")"; then
+            rm "$message"
         fi
     done
 done
