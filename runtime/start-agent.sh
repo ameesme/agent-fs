@@ -45,8 +45,7 @@ if [ "$name" = main ]; then
 else
     set -- "$@" -v "$agent/kanban:/agent/kanban" \
         -v "$agent/kanban/backlog:/agent/kanban/backlog:ro" \
-        -v /data/shared/files:/shared/files -v /data/shared/requests:/shared/requests \
-        -v /data/shared/skills-proposed:/shared/skills-proposed
+        -v /data/shared/files:/shared/files
 fi
 
 for skill in /data/shared/skills/* "$agent"/skills/*; do

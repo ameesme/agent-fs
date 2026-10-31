@@ -6,8 +6,8 @@ set -eu
 
 dockerd-entrypoint.sh dockerd --host=unix:///var/run/docker.sock --data-root /data/docker &
 
-mkdir -p /data/agents /data/shared/files /data/shared/skills-proposed /data/shared/requests
-chmod 1777 /data/shared/files /data/shared/skills-proposed /data/shared/requests
+mkdir -p /data/agents /data/shared/files
+chmod 1777 /data/shared/files
 cp /etc/agent-fs.gitignore /data/.gitignore
 
 git config --global --add safe.directory /data

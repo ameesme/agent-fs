@@ -115,7 +115,9 @@ report_updates() {
 # Reporting may call an LLM; keep it separate from starting agent containers.
 report_updates &
 reporter=$!
-trap 'kill "$reporter" 2>/dev/null || true' EXIT
+cron-tasks &
+scheduler=$!
+trap 'kill "$reporter" "$scheduler" 2>/dev/null || true' EXIT
 trap 'exit 0' INT TERM
 
 echo 'runtime up; watching /data/agents'

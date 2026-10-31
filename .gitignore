@@ -12,6 +12,7 @@
 /data/agents/*/*
 !/data/agents/*/Dockerfile
 !/data/agents/*/agent.json
+!/data/agents/*/cron/
 !/data/agents/main/.env.example
 !/data/agents/main/skills/
 

@@ -1,6 +1,7 @@
 // Trusted runtime extension: conversation context, task updates and file-only tools.
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { Text } from '@earendil-works/pi-tui';
 
 // Resolve existing ancestors as well as the leaf, so symlinks cannot escape a root.
 function resolveFilePath(filePath) {
@@ -136,6 +137,13 @@ export default function agentFs(pi) {
 
     if (process.env.AGENT_FS_NATIVE !== '1') {
       return;
+    }
+
+    if (process.env.AGENT_NAME === 'main' && context.hasUI) {
+      context.ui.setHeader((_tui, theme) => new Text(
+        `${theme.fg('accent', 'agentFS')}\n\nAvailable agents:\n${describeAgents('/data/agents')}`,
+        1, 1,
+      ));
     }
 
     const sessionId = context.sessionManager.getSessionId();

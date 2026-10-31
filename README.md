@@ -35,11 +35,17 @@ The JSON defines its instructions, tools, skills and optional model. Set `PI_MOD
 in `.env` to override the model. Customize its `soul.md` and skills as needed.
 The runtime creates its workspace, memory and task folders, and builds its image.
 
+## Cron
+
+Ask main to schedule recurring work. Schedules live in each worker's `cron/` folder
+and create ordinary tasks. Set `TZ` in the root `.env` for local time (default UTC).
+See the [task skill](data/agents/main/skills/task/SKILL.md#scheduling) for the format.
+
 ## Shared
 
 - `data/shared/.env`: credentials for all agents; an agent's own `.env` overrides them
 - `data/shared/skills/`: common skills; an agent's own skills override matching names
-- Shared files, requests and proposed skills also live here and stay ignored by Git
+- Shared files also live here and stay ignored by Git
 - Restart agentFS after changing main's credentials or shared skills
 
 ## Bridges

@@ -4,6 +4,7 @@
 !agents/*/Dockerfile
 !agents/*/soul.md
 !agents/*/agent.json
+!agents/*/cron/*.md
 !agents/*/.env.example
 !agents/*/skills/**
 !agents/*/home/memory.md
@@ -12,7 +13,6 @@ docker/
 agents/*/kanban/
 agents/*/home/workspace/
 shared/files/
-shared/requests/
 .env
 .env.*
 !.env.example
