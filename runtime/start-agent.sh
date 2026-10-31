@@ -4,7 +4,7 @@
 # and mounts stay consistent wherever an agent is started.
 set -eu
 
-name=${1:?usage: agent-container <name>}
+name=${1:?usage: start-agent <name>}
 agent=/data/agents/$name
 image=agent-$name
 container=$image

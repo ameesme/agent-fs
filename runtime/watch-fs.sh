@@ -50,7 +50,7 @@ while :; do
 
         if [ "$name" = main ]; then
             if ! running main-chat; then
-                agent-container main || true
+                start-agent main || true
             fi
             continue
         fi
@@ -60,7 +60,7 @@ while :; do
         fi
         for task in "$agent"/kanban/todo/*.md "$agent"/kanban/in-progress/*.md; do
             [ -f "$task" ] || continue
-            agent-container "$name" || true
+            start-agent "$name" || true
             break
         done
     done

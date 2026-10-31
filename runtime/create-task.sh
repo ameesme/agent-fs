@@ -4,8 +4,8 @@
 # the runtime never picks up a half-written request.
 set -eu
 
-queue=${1:?usage: newtask <kanban-dir> <title>   (task body on stdin)}
-title=${2:?usage: newtask <kanban-dir> <title>   (task body on stdin)}
+queue=${1:?usage: create-task <kanban-dir> <title>   (task body on stdin)}
+title=${2:?usage: create-task <kanban-dir> <title>   (task body on stdin)}
 
 id="task-$(date -u +%Y%m%d-%H%M%S)-$$"
 temporary=$queue/.$id.md.tmp

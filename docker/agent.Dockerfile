@@ -13,12 +13,12 @@ RUN case "$(uname -m)" in \
       "https://github.com/docker/docker-agent/releases/download/v${DOCKER_AGENT_VERSION}/docker-agent-linux-$arch" \
     && chmod +x /usr/local/bin/docker-agent
 
-COPY agent-loop.sh /usr/local/bin/agent-loop
-COPY newtask.sh /usr/local/bin/newtask
-RUN chmod +x /usr/local/bin/agent-loop /usr/local/bin/newtask
+COPY process-tasks.sh /usr/local/bin/process-tasks
+COPY create-task.sh /usr/local/bin/create-task
+RUN chmod +x /usr/local/bin/process-tasks /usr/local/bin/create-task
 
 ENV HOME=/agent/home \
     DOCKER_AGENT_NO_SETUP=1
 WORKDIR /agent/home/workspace
 
-ENTRYPOINT ["/usr/local/bin/agent-loop"]
+ENTRYPOINT ["/usr/local/bin/process-tasks"]

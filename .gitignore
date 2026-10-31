@@ -2,19 +2,21 @@
 .env.*
 !.env.example
 .DS_Store
+
+# Keep the two included agents; ignore their generated files.
 /data/*
 !/data/agents/
 /data/agents/*
-!/data/agents/poem/
-/data/agents/poem/*
-!/data/agents/poem/Dockerfile
-!/data/agents/poem/agent.yaml
 !/data/agents/main/
-/data/agents/main/*
-!/data/agents/main/Dockerfile
-!/data/agents/main/agent.yaml
+!/data/agents/poem/
+/data/agents/*/*
+!/data/agents/*/Dockerfile
+!/data/agents/*/agent.yaml
 !/data/agents/main/.env.example
 !/data/agents/main/skills/
-/shared/*
-!/shared/.env.example
-!/shared/skills/
+
+# Keep shared defaults and skills; ignore shared runtime data.
+!/data/shared/
+/data/shared/*
+!/data/shared/.env.example
+!/data/shared/skills/

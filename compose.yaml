@@ -9,7 +9,7 @@ services:
     volumes:
       - agents-data:/data
       - ./data/agents:/data/agents
-      - ./shared:/data/shared
+      - ./data/shared:/data/shared
 
 volumes:
   agents-data:

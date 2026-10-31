@@ -15,7 +15,7 @@ to do it. Only change agent definitions when the user asks.
 
 ```sh
 echo "Write a short poem about a quiet morning." \
-  | AGENT_NAME=main newtask /data/agents/poem/kanban/todo "quiet morning"
+  | AGENT_NAME=main create-task /data/agents/poem/kanban/todo "quiet morning"
 ```
 
 Use `todo/` for work that should start now, `backlog/` for work that should wait. The runtime starts
@@ -28,7 +28,7 @@ Requests from agents arrive in `/data/shared/requests/` (mounted as `/shared/req
 
 `/data/agents/<name>/kanban/done/` and `blocked/` hold finished task files with a `## Result`
 section. A blocked task is yours to resolve: fix the blocker, dispatch a follow-up, or escalate to
-the user in chat. Track the exact task filename returned by `newtask`. Check for that file in
+the user in chat. Track the exact task filename returned by `create-task`. Check for that file in
 `done/` or `blocked/`, pausing a few seconds between checks. Keep checking until it finishes or
 you find a concrete blocker. Read its `## Result` and report it to the user in this conversation.
 For a poem, return the poem itself. Creating the task is not the finished answer.

@@ -21,4 +21,4 @@ until docker info >/dev/null 2>&1; do
     sleep 1
 done
 
-exec agent-watch "$@"
+exec watch-fs "$@"

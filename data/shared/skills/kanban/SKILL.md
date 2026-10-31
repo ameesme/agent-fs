@@ -12,7 +12,7 @@ Preserve the task's frontmatter and id. Work on only the task you were given.
 Request work from another agent through the main:
 
 ```sh
-echo 'What needs doing.' | newtask /shared/requests 'short title'
+echo 'What needs doing.' | create-task /shared/requests 'short title'
 ```
 
 The main decides who picks it up. Leave your own `todo/` and `backlog/` alone.
