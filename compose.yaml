@@ -2,13 +2,13 @@ services:
   agents:
     build: .
     privileged: true
+    command: ${BRIDGE_COMMAND:-}
     env_file:
       - path: .env
         required: false
     volumes:
       - agents-data:/data
-    ports:
-      - "8080:8080"
+      - ./data/agents:/data/agents
 
 volumes:
   agents-data:
