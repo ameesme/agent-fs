@@ -7,7 +7,7 @@ set -eu
 mkdir -p /run/agent-fs/outbox /data/.builds /data/.updates /data/.inbox
 docker rm -f main-chat >/dev/null 2>&1 || true
 
-# Optional bridges are separate commands, passed through by Compose.
+# Optional channels are separate commands, passed through by Compose.
 if [ "$#" -gt 0 ]; then
     "$@" &
 fi

@@ -8,8 +8,8 @@ COPY runtime/watch-fs.sh /usr/local/bin/watch-fs
 COPY runtime/start-agent.sh /usr/local/bin/start-agent
 COPY runtime/cron-tasks.sh /usr/local/bin/cron-tasks
 COPY runtime/pi/chat-main.sh /usr/local/bin/chat-main
-COPY bridges /bridges
-COPY bridges/cli.sh /usr/local/bin/chat
+COPY channels /channels
+COPY channels/cli.sh /usr/local/bin/chat
 COPY docker/agent.Dockerfile /agent-base/Dockerfile
 COPY runtime/process-tasks.sh runtime/create-task.sh /agent-base/
 COPY runtime/pi /agent-base/pi

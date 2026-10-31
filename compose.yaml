@@ -2,7 +2,7 @@ services:
   agents:
     build: .
     privileged: true
-    command: ${BRIDGE_COMMAND:-}
+    command: ${CHANNEL_COMMAND:-}
     env_file:
       - path: .env
         required: false

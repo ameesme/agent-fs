@@ -1,9 +1,26 @@
 # agentFS
 
-Folders hold agents. Markdown files hold tasks. Pi does the work.
+Simple, filesystem-based orchestration for AI agents.
 
-Tasks move through `todo → in-progress → done` or `blocked`. A shell loop starts
-agents in Docker containers when work arrives. Main delegates work and reports results.
+**Includes**
+
+- A main chat-agent that delegates work and reports back results
+- Separate Docker containers, tools, skills and instructions for each agent
+- File-based Kanban, persistent workspaces and memory
+- File-based Cron schedules for recurring tasks
+- Git-based version control for agent definitions, skills, schedules and memory
+- Pi's terminal UI and an optional Telegram channel
+- A demo poem agent and example code and mail agents
+
+## In a nutshell
+
+Each agent is a folder with its own instructions, tools and Docker image.
+Tasks are Markdown files in that agent's `kanban/` folder. Moving a task between
+`todo`, `in-progress`, `done` and `blocked` changes the task's status.
+
+`main` stays available for chat and delegates work by creating task files.
+agentFS starts agent containers as tasks arrive. When a task finishes or gets
+blocked, `main` is notified and reports back to you.
 
 ## Getting started
 
@@ -14,47 +31,71 @@ agents in Docker containers when work arrives. Main delegates work and reports r
 - Run `docker compose up -d --build`
 - Run `docker compose exec agents chat` to open Pi's native CLI
 
-Two demo agents are included: **main** coordinates tasks; **poem** writes poems.
-Ask: `Ask poem to write a short poem about a quiet morning.` Main dispatches it
-and reports back when it finishes. You can keep chatting while poem works.
+### The main agent
+
+By default, a `main` agent is included, which is responsible for coordinating
+tasks and reporting the results back to you in a chat.
+
+### Demo
+
+As an example, `poem` is included as an agent by default too. As its name
+suggests, it writes poems, including a cron-based daily poem.
+
+Ask main: `Have poem write a short poem about a quiet morning.` Main dispatches
+the task and reports back when it finishes. You can keep chatting while poem
+works.
 
 Use Pi's `/help` for commands. Resume with
-`docker compose exec agents chat --continue`, or choose a session with `--resume`.
+`docker compose exec agents chat --continue`, or choose a session with
+`--resume`.
 
-## Add an agent
+## Adding other agents
 
-Copy an [example folder](agents) into `data/agents/`:
+Copy an [example agent](agents) into `data/agents/`, create one yourself, or ask
+`main` to create one for you. An agent needs just `agent.json` and a
+`Dockerfile`. Everything else is optional.
 
-```sh
-cp -R agents/code data/agents/
-cp data/agents/code/.env.example data/agents/code/.env
-```
+**agent.json**
 
-An agent needs `agent.json` and a `Dockerfile`. Everything else is optional.
-The JSON defines its instructions, tools, skills and optional model. Set `PI_MODEL`
-in `.env` to override the model. Customize its `soul.md` and skills as needed.
-The runtime creates its workspace, memory and task folders, and builds its image.
+`agent.json` is agentFS's configuration for Pi. It defines the agent's
+instructions, tools, skills and optional model. Customize its `soul.md` and
+`skills/` as needed.
+
+**Dockerfile**
+
+The example Dockerfiles use the `agent-base` image. Extend them with custom
+software such as Claude Code or a headless browser.
+
+agentFS creates workspace, memory and task folders, and builds the agent's
+image.
+It rebuilds the image when its Dockerfile or the base image definition changes.
 
 ## Cron
 
-Ask main to schedule recurring work. Schedules live in each worker's `cron/` folder
-and create ordinary tasks. Set `TZ` in the root `.env` for local time (default UTC).
-See the [task skill](data/agents/main/skills/task/SKILL.md#scheduling) for the format.
+Define recurring tasks as Markdown files in each worker's `cron/` folder. Ask
+`main` to set up a schedule, or copy [poem's example][daily-poem].
 
 ## Shared
 
-- `data/shared/.env`: credentials for all agents; an agent's own `.env` overrides them
-- `data/shared/skills/`: common skills; an agent's own skills override matching names
+- `data/shared/.env`: shared credentials; an agent's own `.env` overrides them
+- `data/shared/skills/`: common skills; an agent's own skills override matching
+  names
 - Shared files also live here and stay ignored by Git
 - Restart agentFS after changing main's credentials or shared skills
 
-## Bridges
+## Channels
 
-The CLI opens Pi's terminal UI. For Telegram, set
-`BRIDGE_COMMAND=sh /bridges/telegram.sh`, `TELEGRAM_BOT_TOKEN` and
-`TELEGRAM_CHAT_IDS` in the root `.env`, then run `docker compose up -d`.
-Each Telegram chat has its own conversation; `/new` or `/reset` starts a fresh one.
+The default way to interact with `main` is through Pi's terminal UI. However, by
+setting a custom `CHANNEL_COMMAND`, you can enable other ways.
+
+### Telegram
+For Telegram, set `CHANNEL_COMMAND=sh /channels/telegram.sh`, `TELEGRAM_BOT_TOKEN`
+and `TELEGRAM_CHAT_IDS` in the root `.env`, then run `docker compose up -d`.
+
+Each Telegram chat has its own conversation; `/new` or `/reset` starts a fresh
+one.
 
 [MIT](LICENSE).
 
 [llm]: https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/providers.md
+[daily-poem]: data/agents/poem/cron/daily-poem.md

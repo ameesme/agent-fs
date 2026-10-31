@@ -25,7 +25,7 @@ send() {
     done
 }
 
-echo 'telegram bridge up; only allowlisted chats can send work'
+echo 'telegram channel up; only allowlisted chats can send work'
 while :; do
     poll=$(printf '{"offset":%s,"timeout":5}' "$offset")
     if ! updates=$(telegram getUpdates "$poll"); then

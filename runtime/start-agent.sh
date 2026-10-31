@@ -58,7 +58,7 @@ for skill in /data/shared/skills/* "$agent"/skills/*; do
 done
 
 if [ "$name" = main ]; then
-    # CLI and bridge invocations share main's mounts but keep separate Pi sessions.
+    # Channels share main's mounts but keep separate Pi sessions.
     set -- "$@" --entrypoint sleep
     docker run "$@" "$image" infinity
 else

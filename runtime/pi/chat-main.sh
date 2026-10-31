@@ -30,6 +30,9 @@ trap 'exit 143' TERM
 
 printf '%s' "$text" | docker exec -i \
     -e "AGENT_FS_CONVERSATION=$conversation" main-chat sh -c '
-        mkdir -p /agent/home/.pi/bridge-sessions
-        exec agent-run --print --session "/agent/home/.pi/bridge-sessions/$AGENT_FS_CONVERSATION.jsonl"
+        if [ -d /agent/home/.pi/bridge-sessions ] && [ ! -e /agent/home/.pi/channel-sessions ]; then
+            mv /agent/home/.pi/bridge-sessions /agent/home/.pi/channel-sessions
+        fi
+        mkdir -p /agent/home/.pi/channel-sessions
+        exec agent-run --print --session "/agent/home/.pi/channel-sessions/$AGENT_FS_CONVERSATION.jsonl"
     '

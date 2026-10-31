@@ -1,5 +1,5 @@
 #!/bin/sh
-# Open Pi's native terminal UI for main; the extension delivers queued task updates.
+# CLI channel: open Pi's native terminal UI for main and receive task updates.
 set -eu
 
 printf 'Waiting for main (the first build can take a while)...\n'

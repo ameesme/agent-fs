@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// One launch path for interactive main, bridge sessions and queued workers.
+// One launch path for interactive main, channel sessions and queued workers.
 import { readFileSync } from 'node:fs';
 import { spawn } from 'node:child_process';
 
