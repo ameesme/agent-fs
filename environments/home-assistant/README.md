@@ -1,8 +1,12 @@
 # agentFS for Home Assistant
 
+[![Add agentFS to Home Assistant](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Fameesme%2Fagent-fs)
+
 This optional app is isolated in `environments/home-assistant/`. Its image fetches the core
 at the commit pinned by `AGENT_FS_REF` in this folder's Dockerfile, so Supervisor
 can build from this folder without changing the core Dockerfile or runtime.
+Home Assistant requires `repository.yaml` at the repository root to recognize
+the repository; the app itself stays in this folder.
 
 Requires Home Assistant OS with the app store (formerly add-ons).
 
