@@ -52,6 +52,11 @@ notify_update() {
             notify_prompt=$(printf '%s\nTask title: %s\n%s\n' "$notify_prompt" "${notify_title:-the requested task}" \
                 'Write a brief, natural Telegram message in the language of this conversation. Describe the task by its readable title or purpose, never its ID, filename, path, or Kanban state. Do not include technical transitions, role prefixes, or Markdown formatting. If done, say it is ready and offer to share the result. If blocked, explain what is needed in plain language. Do not include the task output.') ;;
     esac
+    # Scheduled digests are requested deliveries, so include their result directly.
+    # Ordinary task updates keep the existing status-only behaviour.
+    if [ "$notify_status" = done ] && grep -q '^schedule_id: ' "$notify_task"; then
+        notify_prompt=$(printf 'Scheduled task completed: %s\nRead its ## Result and deliver the full digest now, in its original language. Do not ask whether to share it. Do not add task IDs, paths or status chatter.\n' "$notify_task")
+    fi
     if ! notify_text=$(printf '%s' "$notify_prompt" | chat-main "$notify_conversation"); then
         echo "Could not report $notify_task; will retry." >&2
         return 1
@@ -147,9 +152,19 @@ while :; do
             done
         fi
 
-        hash=$({ cat "$agent/Dockerfile"; printf '%s' "$base_hash"; } | sha256sum | cut -d ' ' -f 1)
+        hash=$({
+            cat "$agent/Dockerfile"
+            if [ -d "$agent/build" ]; then
+                find "$agent/build" -type f -exec sha256sum {} \; | sort
+            fi
+            printf '%s' "$base_hash"
+        } | sha256sum | cut -d ' ' -f 1)
         if [ "$(cat "/data/.builds/$name" 2>/dev/null)" != "$hash" ]; then
-            docker build -t "agent-$name" - < "$agent/Dockerfile" || continue
+            if [ -d "$agent/build" ]; then
+                docker build -t "agent-$name" "$agent" || continue
+            else
+                docker build -t "agent-$name" - < "$agent/Dockerfile" || continue
+            fi
             printf '%s\n' "$hash" > "/data/.builds/$name"
         fi
 

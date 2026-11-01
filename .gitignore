@@ -14,6 +14,8 @@
 !/data/agents/*/Dockerfile
 !/data/agents/*/agent.json
 !/data/agents/*/soul.md
+!/data/agents/*/.dockerignore
+!/data/agents/*/scripts/
 !/data/agents/*/cron/
 !/data/agents/*/.env.example
 !/data/agents/main/skills/
@@ -23,3 +25,9 @@
 /data/shared/*
 !/data/shared/.env.example
 !/data/shared/skills/
+/data/shared/skills/*
+!/data/shared/skills/kanban/
+!/data/shared/skills/memory/
+
+__pycache__/
+*.pyc

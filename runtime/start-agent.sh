@@ -25,7 +25,7 @@ fi
 chown "$uid:$gid" "$agent/home/memory.md"
 
 docker rm -f "$container" >/dev/null 2>&1 || true
-set -- -d --name "$container" -e "AGENT_NAME=$name"
+set -- -d --name "$container" -e "AGENT_NAME=$name" -e "TZ=${TZ:-UTC}"
 if [ -f /data/shared/.env ]; then
     set -- "$@" --env-file /data/shared/.env
 fi
@@ -36,6 +36,9 @@ set -- "$@" -v "$agent/home:/agent/home" \
     -v "$agent/agent.json:/agent/agent.json:ro"
 if [ -f "$agent/soul.md" ]; then
     set -- "$@" -v "$agent/soul.md:/agent/soul.md:ro"
+fi
+if [ -d "$agent/scripts" ]; then
+    set -- "$@" -v "$agent/scripts:/agent/scripts:ro"
 fi
 
 if [ "$name" = main ]; then

@@ -6,6 +6,8 @@ services:
     env_file:
       - path: .env
         required: false
+    environment:
+      TZ: ${TZ:-UTC}
     volumes:
       - agents-data:/data
       - ./data/agents:/data/agents

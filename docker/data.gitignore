@@ -3,6 +3,9 @@
 !.gitignore
 !agents/*/Dockerfile
 !agents/*/soul.md
+!agents/*/.dockerignore
+!agents/*/scripts/**
+!agents/*/build/**
 !agents/*/agent.json
 !agents/*/cron/*.md
 !agents/*/.env.example
@@ -16,3 +19,6 @@ shared/files/
 .env
 .env.*
 !.env.example
+
+__pycache__/
+*.pyc
