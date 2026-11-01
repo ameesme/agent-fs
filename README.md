@@ -94,7 +94,7 @@ If you have a dedicated chat bot, set `TELEGRAM_CHAT_BOT_TOKEN`; the channel use
 that token instead of `TELEGRAM_BOT_TOKEN`.
 
 Each Telegram chat has its own conversation; `/new` or `/reset` starts a fresh
-one.
+one. Speech-to-text is enabled by including an `OPENAI_API_KEY` in your .env.
 
 [MIT](LICENSE).
 
