@@ -3,6 +3,7 @@
 # Uses a saved Pi session per Telegram chat,
 # so Telegram stays an optional way to talk to main.
 set -eu
+TELEGRAM_BOT_TOKEN=${TELEGRAM_CHAT_BOT_TOKEN:-${TELEGRAM_BOT_TOKEN:-}}
 : "${TELEGRAM_BOT_TOKEN:?Set TELEGRAM_BOT_TOKEN}"
 allowed=$(printf '%s' "${TELEGRAM_CHAT_IDS:-}" | tr -d '[:space:]')
 state=/data/.telegram
@@ -10,7 +11,7 @@ mkdir -p "$state"
 offset=0
 
 telegram() {
-    curl -fsS --max-time 70 "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/$1" \
+    curl -fsS --max-time "${3:-70}" "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/$1" \
         -H 'content-type: application/json' --data "$2"
 }
 
@@ -23,6 +24,36 @@ send() {
         telegram sendMessage "$send_payload" >/dev/null || return 1
         send_start=$((send_start + 4000))
     done
+}
+
+typing_pid=
+stop_typing() {
+    [ -n "$typing_pid" ] || return 0
+    kill "$typing_pid" 2>/dev/null || true
+    wait "$typing_pid" 2>/dev/null || true
+    typing_pid=
+}
+trap 'stop_typing' EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
+start_typing() {
+    typing_payload=$(jq -cn --arg chat "$1" '{chat_id:$chat, action:"typing"}')
+    (
+        typing_child=
+        trap '[ -z "$typing_child" ] || { kill "$typing_child" 2>/dev/null || true; wait "$typing_child" 2>/dev/null || true; }' EXIT
+        trap 'exit 0' INT TERM
+        while :; do
+            telegram sendChatAction "$typing_payload" 5 &
+            typing_child=$!
+            wait "$typing_child" || true
+            # Telegram clears chat actions after five seconds or on a reply.
+            sleep 4 &
+            typing_child=$!
+            wait "$typing_child" || true
+        done
+    ) >/dev/null 2>&1 &
+    typing_pid=$!
 }
 
 echo 'telegram channel up; only allowlisted chats can send work'
@@ -49,10 +80,12 @@ while :; do
                 send "$chat" 'fresh conversation' || true
                 continue ;;
         esac
-        send "$chat" 'on it' || true
+        start_typing "$chat"
         if reply=$(printf '%s' "$text" | chat-main "telegram-$chat-$reset"); then
+            stop_typing
             send "$chat" "$reply" || true
         else
+            stop_typing
             send "$chat" 'main unreachable' || true
         fi
     done

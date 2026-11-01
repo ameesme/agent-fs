@@ -90,6 +90,8 @@ setting a custom `CHANNEL_COMMAND`, you can enable other ways.
 ### Telegram
 For Telegram, set `CHANNEL_COMMAND=sh /channels/telegram.sh`, `TELEGRAM_BOT_TOKEN`
 and `TELEGRAM_CHAT_IDS` in the root `.env`, then run `docker compose up -d`.
+If you have a dedicated chat bot, set `TELEGRAM_CHAT_BOT_TOKEN`; the channel uses
+that token instead of `TELEGRAM_BOT_TOKEN`.
 
 Each Telegram chat has its own conversation; `/new` or `/reset` starts a fresh
 one.

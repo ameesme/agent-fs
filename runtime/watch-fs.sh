@@ -41,15 +41,20 @@ notify_update() {
             return $? ;;
     esac
 
-    notify_text=$(printf 'kanban> %s: %s -> %s' \
-        "${notify_task#/data/agents/}" "$notify_from" "$notify_status")
     # Main already confirms newly queued tasks in its dispatch reply.
-    if [ "$notify_from" != new ] || { [ "$notify_status" != todo ] && [ "$notify_status" != backlog ]; }; then
-        if ! notify_reply=$(printf '%s' "$notify_prompt" | chat-main "$notify_conversation"); then
-            echo "Could not report $notify_task; will retry." >&2
-            return 1
-        fi
-        notify_text=$(printf '%s\nmain> %s' "$notify_text" "$notify_reply")
+    if [ "$notify_from" = new ] && { [ "$notify_status" = todo ] || [ "$notify_status" = backlog ]; }; then
+        return 0
+    fi
+
+    case "$notify_conversation" in
+        telegram-*)
+            notify_title=$(awk '/^# / { sub(/^# /, ""); print; exit }' "$notify_task" 2>/dev/null || true)
+            notify_prompt=$(printf '%s\nTask title: %s\n%s\n' "$notify_prompt" "${notify_title:-the requested task}" \
+                'Write a brief, natural Telegram message in the language of this conversation. Describe the task by its readable title or purpose, never its ID, filename, path, or Kanban state. Do not include technical transitions, role prefixes, or Markdown formatting. If done, say it is ready and offer to share the result. If blocked, explain what is needed in plain language. Do not include the task output.') ;;
+    esac
+    if ! notify_text=$(printf '%s' "$notify_prompt" | chat-main "$notify_conversation"); then
+        echo "Could not report $notify_task; will retry." >&2
+        return 1
     fi
 
     update_number=$((update_number + 1))
