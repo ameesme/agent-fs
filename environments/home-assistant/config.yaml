@@ -1,0 +1,24 @@
+name: agentFS
+version: "0.1.0"
+slug: agent_fs
+description: Filesystem-based orchestration for AI agents
+url: https://github.com/ameesme/agent-fs
+arch:
+  - amd64
+  - aarch64
+startup: application
+boot: auto
+stage: experimental
+# agentFS runs its own Docker daemon, just like the Compose installation.
+full_access: true
+apparmor: false
+options:
+  environment: []
+  telegram_bot_token: ""
+  telegram_chat_ids: ""
+schema:
+  environment:
+    - name: match(^[A-Za-z_][A-Za-z0-9_]*$)
+      value: password
+  telegram_bot_token: password
+  telegram_chat_ids: str

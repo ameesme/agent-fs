@@ -162,8 +162,7 @@ while :; do
         if [ -n "$audio" ]; then
             start_typing "$chat"
             if transcript=$(transcribe "$update"); then
-                send "$chat" "Heard:
-$transcript" || true
+                send "$chat" "💬 *“${transcript}”*" || true
                 caption=$(printf '%s' "$update" | jq -r '.message.caption // empty')
                 text=$transcript
                 if [ -n "$caption" ]; then
