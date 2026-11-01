@@ -10,7 +10,7 @@ Simple, filesystem-based orchestration for AI agents.
 - File-based Cron schedules for recurring tasks
 - Git-based version control for agent definitions, skills, schedules and memory
 - Pi's terminal UI and an optional Telegram channel
-- A demo poem agent and example code and mail agents
+- Code and poem agents included
 
 ## In a nutshell
 
@@ -51,9 +51,8 @@ Use Pi's `/help` for commands. Resume with
 
 ## Adding other agents
 
-Copy an [example agent](agents) into `data/agents/`, create one yourself, or ask
-`main` to create one for you. An agent needs just `agent.json` and a
-`Dockerfile`. Everything else is optional.
+Ask `main` to create an agent, or add a folder under `data/agents/` yourself.
+An agent needs just `agent.json` and a `Dockerfile`. Everything else is optional.
 
 **agent.json**
 
@@ -63,12 +62,12 @@ instructions, tools, skills and optional model. Customize its `soul.md` and
 
 **Dockerfile**
 
-The example Dockerfiles use the `agent-base` image. Extend them with custom
-software such as Claude Code or a headless browser.
+Use `FROM agent-base` for Pi, Python and the task runtime. Add any other
+software your agent needs, for example, the included code agent adds Claude Code, tmux and
+Chromium.
 
 agentFS creates workspace, memory and task folders, and builds the agent's
-image.
-It rebuilds the image when its Dockerfile or the base image definition changes.
+image. It rebuilds the image when its Dockerfile or the base image definition changes.
 
 ## Cron
 

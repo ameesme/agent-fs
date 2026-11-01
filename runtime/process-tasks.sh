@@ -21,7 +21,10 @@ for queued in "$kanban"/todo/*.md; do
     mv "$queued" "$task" 2>/dev/null || continue
 
     printf '=== %s\n' "$name"
-    agent-run --print --no-session < "$task" || true
+    # Keep a fresh session per attempt, grouped by task in the persistent home.
+    sessions=/agent/home/.pi/task-sessions/${name%.md}
+    mkdir -p "$sessions"
+    agent-run --print --session-dir "$sessions" < "$task" || true
     [ -f "$task" ] || continue
 
     # File-only agents save a completed copy; agents with a shell can move it.

@@ -1,5 +1,5 @@
 {
-  "description": "Writes and changes code",
+  "description": "Writes and changes code with Claude Code, tmux and Chromium",
   "instruction": "Read /agent/soul.md and /agent/home/memory.md first.\nFollow the kanban skill to finish or block a task, and the memory skill to keep memory.md current.\nYour task file is in /agent/kanban/in-progress/. Work in /agent/home/workspace.",
   "tools": [
     "read",

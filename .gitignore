@@ -3,17 +3,19 @@
 !.env.example
 .DS_Store
 
-# Keep the two included agents; ignore their generated files.
+# Keep included agents; ignore their generated files.
 /data/*
 !/data/agents/
 /data/agents/*
 !/data/agents/main/
 !/data/agents/poem/
+!/data/agents/code/
 /data/agents/*/*
 !/data/agents/*/Dockerfile
 !/data/agents/*/agent.json
+!/data/agents/*/soul.md
 !/data/agents/*/cron/
-!/data/agents/main/.env.example
+!/data/agents/*/.env.example
 !/data/agents/main/skills/
 
 # Keep shared defaults and skills; ignore shared runtime data.

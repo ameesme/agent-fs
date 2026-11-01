@@ -4,6 +4,7 @@ ARG PI_VERSION=1.2.0
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
       ca-certificates curl git bash fd-find ripgrep \
+      python3 python3-pip python3-venv python-is-python3 \
     && ln -s /usr/bin/fdfind /usr/local/bin/fd \
     && rm -rf /var/lib/apt/lists/*
 
