@@ -1,5 +1,5 @@
 name: agentFS
-version: "0.1.0"
+version: "0.1.1"
 slug: agent_fs
 description: Filesystem-based orchestration for AI agents
 url: https://github.com/ameesme/agent-fs
@@ -9,9 +9,16 @@ arch:
 startup: application
 boot: auto
 stage: experimental
-# agentFS runs its own Docker daemon, just like the Compose installation.
+# Device access and Linux capabilities are separate Supervisor settings.
 full_access: true
 apparmor: false
+privileged:
+  - SYS_ADMIN
+  - NET_ADMIN
+  - SYS_RESOURCE
+  - MKNOD
+  - NET_RAW
+  - SETFCAP
 options:
   environment: []
   telegram_bot_token: ""

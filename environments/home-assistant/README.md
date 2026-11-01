@@ -15,6 +15,9 @@ Requires Home Assistant OS with the app store (formerly add-ons).
 2. Turn off **Protection mode** on the app's Info tab. agentFS needs privileged
    Docker-in-Docker, as it does in Compose. It uses its own Docker daemon;
    it does not connect to Home Assistant's Docker socket.
+   The app also requests explicit Linux capabilities for mounts, container
+   networking, resource limits, device nodes and file capabilities;
+   `full_access` alone does not grant these.
 3. In the app's Configuration tab, add your provider credentials and Telegram
    settings, for example:
 
