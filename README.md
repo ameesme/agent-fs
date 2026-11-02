@@ -96,11 +96,6 @@ that token instead of `TELEGRAM_BOT_TOKEN`.
 Each Telegram chat has its own conversation; `/new` or `/reset` starts a fresh
 one. Speech-to-text is enabled by including an `OPENAI_API_KEY` in your .env.
 
-## Home Assistant
-agentFS comes with a preconfigured Home Assistant app you can find under `/environments`, 
-which can be installed by adding this repository as a custom app installation. Refer to
-the instructions for further details.
-
 [MIT](LICENSE).
 
 [llm]: https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/providers.md
