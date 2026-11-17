@@ -12,20 +12,30 @@ coordinator, not a worker.
 
 ## Creating
 
-Create `agent.json` and a `Dockerfile`. A typical worker configuration is:
+Create `soul.md`, `agent.json` and a `Dockerfile`. `soul.md` is the agent's
+system prompt: its role and instructions in Markdown. A typical worker soul is:
+
+```markdown
+# Name
+
+One line on the agent's role.
+
+- Read /agent/home/memory.md first, and use the memory skill to keep it current.
+- Your task file is in /agent/kanban/in-progress/. Use the kanban skill to finish or block it.
+- Work in /agent/home/workspace.
+```
+
+And its `agent.json`:
 
 ```json
 {
   "description": "A short description of the agent's job",
-  "instruction": "Read /agent/home/memory.md first. Follow the kanban skill to finish or block your assigned task and the memory skill to keep memory current. Work in /agent/home/workspace.",
   "tools": ["read", "bash", "edit", "write"],
   "skills": ["kanban", "memory"]
 }
 ```
 
 Tailor the role, instructions and tools to the request. `model` is optional.
-For a separate personality or role file, create `soul.md` and explicitly tell
-the agent to read `/agent/soul.md` in its instruction.
 
 Start the Dockerfile with `FROM agent-base`. Add software with `RUN` as needed;
 the build receives only the Dockerfile, so `COPY` from the agent folder won't

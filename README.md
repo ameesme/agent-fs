@@ -52,13 +52,16 @@ Use Pi's `/help` for commands. Resume with
 ## Adding other agents
 
 Ask `main` to create an agent, or add a folder under `data/agents/` yourself.
-An agent needs just `agent.json` and a `Dockerfile`. Everything else is optional.
+An agent needs `soul.md`, `agent.json` and a `Dockerfile`. Everything else is optional.
+
+**soul.md**
+
+The agent's role and instructions in Markdown; Pi uses it as the system prompt.
 
 **agent.json**
 
-`agent.json` is agentFS's configuration for Pi. It defines the agent's
-instructions, tools, skills and optional model. Customize its `soul.md` and
-`skills/` as needed.
+`agent.json` is agentFS's configuration for Pi. It defines the agent's tools,
+skills and optional model. Add skills under `skills/` as needed.
 
 **Dockerfile**
 
