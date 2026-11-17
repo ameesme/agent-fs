@@ -9,7 +9,7 @@ Simple, filesystem-based orchestration for AI agents.
 - File-based Kanban, persistent workspaces and memory
 - File-based Cron schedules for recurring tasks
 - Git-based version control for agent definitions, skills, schedules and memory
-- Pi's terminal UI and an optional Telegram channel
+- Pi's terminal UI and optional web and Telegram channels
 - Code and poem agents included
 
 ## In a nutshell
@@ -52,13 +52,18 @@ Use Pi's `/help` for commands. Resume with
 ## Adding other agents
 
 Ask `main` to create an agent, or add a folder under `data/agents/` yourself.
-An agent needs just `agent.json` and a `Dockerfile`. Everything else is optional.
+An agent needs `soul.md`, `agent.json` and a `Dockerfile`. Everything else is optional.
+
+**soul.md**
+
+The agent's role and instructions in Markdown; Pi uses it as the system prompt.
 
 **agent.json**
 
-`agent.json` is agentFS's configuration for Pi. It defines the agent's
-instructions, tools, skills and optional model. Customize its `soul.md` and
-`skills/` as needed.
+`agent.json` is agentFS's configuration for Pi. It defines the agent's tools,
+skills, MCP servers and optional model. Add skills under `skills/` as needed.
+MCP servers go under `mcpServers`, as in other MCP clients; `${NAME}` takes a
+value from the agent's `.env`.
 
 **Dockerfile**
 
@@ -95,6 +100,16 @@ that token instead of `TELEGRAM_BOT_TOKEN`.
 
 Each Telegram chat has its own conversation; `/new` or `/reset` starts a fresh
 one. Speech-to-text is enabled by including an `OPENAI_API_KEY` in your .env.
+
+### Web
+Set `CHANNEL_COMMAND=sh /channels/web.sh`, run `docker compose up -d` and open
+http://localhost:8080. To run Telegram too, use
+`CHANNEL_COMMAND=sh /channels/web.sh sh /channels/telegram.sh`.
+
+Chat with any agent, with `/new`, `/reset` and `/help`. Other channels'
+conversations, such as Telegram, are shown read-only. Files browses agent and
+shared files, with upload, download and delete, including `.env` files. There
+is no login, so keep the port on localhost.
 
 [MIT](LICENSE).
 

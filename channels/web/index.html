@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>agentFS</title>
+<script src="https://unpkg.com/htmx.org@2.0.4/dist/htmx.min.js"></script>
+<script src="https://unpkg.com/htmx-ext-json-enc@2.0.1/json-enc.js"></script>
+<style>
+:root { color-scheme: light dark; font: 16px/1.4 system-ui, sans-serif; }
+* { box-sizing: border-box; }
+body { margin: 0; height: 100dvh; display: flex; flex-direction: column; background: Canvas; color: CanvasText; }
+button, select, input { font: inherit; color: inherit; }
+header { display: flex; border-bottom: 1px solid #8884; }
+header button { flex: 1; padding: .75rem; border: 0; background: none; cursor: pointer; }
+header button.on { font-weight: 600; box-shadow: inset 0 -2px currentColor; }
+#view { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+#chat, #files { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.bar { display: flex; gap: .5rem; padding: .5rem; border-bottom: 1px solid #8884; }
+.bar select, .send input { flex: 1; min-width: 0; min-height: 2.5rem; padding: 0 .6rem; border: 1px solid #8886; border-radius: .5rem; background: Field; color: FieldText; }
+#messages { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column-reverse; padding: 0 .75rem; }
+#messages p { margin: .3rem 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.user { align-self: flex-end; background: #8882; padding: .4rem .6rem; border-radius: .5rem; max-width: 85%; }
+.tool, .note { opacity: .6; font-size: .85em; }
+.error { color: #c33; }
+#messages details { margin: .2rem 0; }
+#messages summary { cursor: pointer; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#messages details pre { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 20rem; overflow-y: auto; margin: .25rem 0 0 1rem; }
+.send, .bottom { display: flex; align-items: center; justify-content: flex-end; gap: .5rem; margin: 0; padding: .5rem .5rem max(.5rem, env(safe-area-inset-bottom)); border-top: 1px solid #8884; }
+.send button, .button { display: inline-flex; align-items: center; min-height: 2.5rem; padding: 0 1rem; border: 1px solid #8886; border-radius: .5rem; background: #8882; color: inherit; text-decoration: none; cursor: pointer; white-space: nowrap; }
+.icon { width: 2.5rem; padding: 0; justify-content: center; }
+.send button:disabled, .button:disabled, .button:has(input:disabled) { opacity: .4; cursor: not-allowed; }
+#busy { display: none; gap: .3rem; padding: .25rem .75rem .5rem; }
+#busy.htmx-request { display: flex; }
+#busy span { width: .5rem; height: .5rem; border-radius: 50%; background: currentColor; opacity: .25; animation: pulse 1s infinite; }
+#busy span:nth-child(2) { animation-delay: .2s; }
+#busy span:nth-child(3) { animation-delay: .4s; }
+@keyframes pulse { 50% { opacity: .8; } }
+.list { flex: 1; min-height: 0; overflow-y: auto; margin: 0; padding: 0; }
+.tree, .tree ul { margin: 0; padding: .25rem; list-style: none; }
+.tree ul { padding: 0 0 0 1rem; }
+.tree summary, .tree a { display: flex; align-items: center; gap: .5rem; min-height: 2.5rem; padding: 0 .5rem; border-radius: .4rem; color: inherit; text-decoration: none; cursor: pointer; list-style: none; }
+.tree summary::-webkit-details-marker { display: none; }
+.tree summary::before, .tree a::before { content: ''; flex: none; width: .75rem; opacity: .6; }
+.tree summary::before { content: '▸'; }
+.tree details[open] > summary::before { content: '▾'; }
+.tree summary:hover, .tree a:hover { background: #8881; }
+.tree .selected { background: #8882; }
+.name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.size { opacity: .6; font-size: .85em; white-space: nowrap; }
+#target { flex: 1; min-width: 0; opacity: .6; font-size: .85em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#sheet { position: fixed; inset: 0; z-index: 1; display: flex; flex-direction: column; background: Canvas; }
+#sheet:empty { display: none; }
+@media (min-width: 48rem) {
+  #files { display: grid; grid-template-columns: 20rem minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; }
+  .tree { grid-area: 1 / 1; }
+  #files > .bottom { grid-area: 2 / 1; }
+  #sheet, #sheet:empty { position: static; grid-area: 1 / 2 / 3; display: flex; border-left: 1px solid #8884; }
+  #sheet:empty::before { content: 'Select a file'; margin: auto; opacity: .5; }
+}
+.path { flex: 1; min-width: 0; align-self: center; overflow-wrap: anywhere; }
+.file { margin: 0; padding: .75rem; white-space: pre-wrap; overflow-wrap: anywhere; }
+</style>
+<script>
+const encode = text => btoa(String.fromCharCode(...new TextEncoder().encode(text))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+function load() {
+  const [view, ...rest] = decodeURIComponent(location.hash.slice(1)).split('/');
+  const sheet = document.getElementById('sheet');
+  if (view === 'files' && sheet) {
+    if (!rest.length) return sheet.replaceChildren();
+    return htmx.ajax('GET', `cgi-bin/ui?do=file&p=${encode(rest.join('/'))}`, sheet);
+  }
+  const url = view === 'files' ? `cgi-bin/ui?do=open&p=${encode(rest.join('/'))}` : `cgi-bin/ui?do=chat&a=${rest[0] || ''}&c=${rest[1] || ''}`;
+  htmx.ajax('GET', url, '#view');
+}
+// Mirror the open view in the address bar so refresh and back return to it.
+function remember() {
+  const hash = [...document.querySelectorAll('#view [data-hash]')].pop()?.dataset.hash;
+  if (!hash) return;
+  document.querySelectorAll('header button').forEach(button => button.classList.toggle('on', hash.startsWith(button.textContent.toLowerCase())));
+  if (decodeURIComponent(location.hash.slice(1)) === hash) return;
+  history[location.hash ? 'pushState' : 'replaceState'](null, '', '#' + encodeURI(hash));
+}
+addEventListener('DOMContentLoaded', load);
+addEventListener('popstate', load);
+document.addEventListener('htmx:afterSettle', remember);
+// Keep what was typed during a reply when the chat re-renders.
+let draft;
+document.addEventListener('htmx:beforeSwap', event => {
+  const input = document.querySelector('.send input');
+  draft = event.detail.target.id === 'chat' && input ? { text: input.value, focused: input === document.activeElement } : null;
+});
+document.addEventListener('htmx:afterSwap', () => {
+  const input = document.querySelector('.send input');
+  if (!draft || !input) return;
+  input.value = draft.text;
+  if (draft.focused) input.focus();
+});
+let folder;
+document.addEventListener('click', event => {
+  const summary = event.target.closest('.tree summary');
+  if (!summary) return;
+  document.querySelector('.tree .selected')?.classList.remove('selected');
+  summary.classList.add('selected');
+  folder = summary.dataset.dir;
+  document.querySelectorAll('#files .bottom :disabled').forEach(control => control.disabled = false);
+  document.getElementById('target').textContent = summary.dataset.path;
+});
+function refresh(token) {
+  const list = document.getElementById('t-' + token);
+  if (list) htmx.ajax('GET', `cgi-bin/ui?do=tree&p=${token}`, list);
+}
+// Send the raw file as the body; the shell can store that without parsing multipart forms.
+function upload(input) {
+  const file = input.files[0];
+  if (!file) return;
+  create('upload', file.name, file);
+  input.value = '';
+}
+function makeFolder() {
+  const name = prompt('Folder name');
+  if (name) create('mkdir', name);
+}
+function create(action, name, body) {
+  const target = folder;
+  fetch(`cgi-bin/ui?do=${action}&p=${target}&n=${encode(name)}`, { method: 'POST', body })
+    .then(response => response.ok ? refresh(target) : response.text().then(alert));
+}
+document.addEventListener('htmx:responseError', event => alert(event.detail.xhr.responseText));
+</script>
+</head>
+<body>
+<header>
+<button hx-get="cgi-bin/ui?do=chat" hx-target="#view">Chat</button>
+<button hx-get="cgi-bin/ui?do=open" hx-target="#view">Files</button>
+</header>
+<main id="view"></main>
+</body>
+</html>

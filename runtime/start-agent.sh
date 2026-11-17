@@ -4,12 +4,14 @@
 # and mounts stay consistent wherever an agent is started.
 set -eu
 
-name=${1:?usage: start-agent <name>}
+name=${1:?usage: start-agent <name> [chat]}
+mode=${2:-}
+[ "$name" != main ] || mode=chat
 agent=/data/agents/$name
 image=agent-$name
 container=$image
-if [ "$name" = main ]; then
-    container=main-chat
+if [ "$mode" = chat ]; then
+    container=$name-chat
 fi
 
 user=$(docker image inspect -f '{{.Config.User}}' "$image")
@@ -57,11 +59,11 @@ for skill in /data/shared/skills/* "$agent"/skills/*; do
     case "$skill" in
         /data/shared/*) [ ! -f "$agent/skills/$skill_name/SKILL.md" ] || continue ;;
     esac
-    set -- "$@" -v "$skill:/agent/home/.agents/skills/$skill_name:ro"
+    set -- "$@" -v "$skill:/agent/skills/$skill_name:ro"
 done
 
-if [ "$name" = main ]; then
-    # Channels share main's mounts but keep separate Pi sessions.
+if [ "$mode" = chat ]; then
+    # Channels share the agent's mounts but keep separate Pi sessions.
     set -- "$@" --entrypoint sleep
     docker run "$@" "$image" infinity
 else

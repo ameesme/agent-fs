@@ -5,9 +5,12 @@
 set -eu
 
 dockerd-entrypoint.sh dockerd --host=unix:///var/run/docker.sock --data-root /data/docker &
+dockerd_pid=$!
 
 mkdir -p /data/agents /data/shared/files
 chmod 1777 /data/shared/files
+# Older versions mounted skills inside agent homes, leaving empty folders behind.
+rmdir /data/agents/*/home/.agents/skills/* /data/agents/*/home/.agents/skills /data/agents/*/home/.agents 2>/dev/null || true
 cp /etc/agent-fs.gitignore /data/.gitignore
 
 git config --global --add safe.directory /data
@@ -19,6 +22,10 @@ if [ ! -d /data/.git ]; then
 fi
 
 until docker info >/dev/null 2>&1; do
+    if ! kill -0 "$dockerd_pid" 2>/dev/null; then
+        echo 'dockerd exited before it was ready.' >&2
+        exit 1
+    fi
     sleep 1
 done
 
