@@ -5,6 +5,7 @@
 set -eu
 
 dockerd-entrypoint.sh dockerd --host=unix:///var/run/docker.sock --data-root /data/docker &
+dockerd_pid=$!
 
 mkdir -p /data/agents /data/shared/files
 chmod 1777 /data/shared/files
@@ -19,6 +20,10 @@ if [ ! -d /data/.git ]; then
 fi
 
 until docker info >/dev/null 2>&1; do
+    if ! kill -0 "$dockerd_pid" 2>/dev/null; then
+        echo 'dockerd exited before it was ready.' >&2
+        exit 1
+    fi
     sleep 1
 done
 
