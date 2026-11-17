@@ -1,5 +1,5 @@
 name: agentFS
-version: "0.1.1"
+version: "0.1.2"
 slug: agent_fs
 description: Filesystem-based orchestration for AI agents
 url: https://github.com/ameesme/agent-fs

@@ -1,6 +1,8 @@
 #!/bin/sh
 # Home Assistant adapter; the core runtime stays unchanged.
 set -eu
+# Supervisor never runs apps privileged, so Docker mounts cgroups read-only and dind cannot nest them.
+mount -o remount,rw /sys/fs/cgroup
 # Home Assistant owns shared credentials; agent-specific .env files still win.
 if [ ! -f /data/.agent-fs-initialized ]; then
     (cd /etc/agent-fs-defaults && find . -type f) | while IFS= read -r file; do
