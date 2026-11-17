@@ -1,7 +1,7 @@
 FROM docker:28-dind AS source
 RUN apk add --no-cache git
 # Pin the core independently of the Home Assistant packaging version.
-ARG AGENT_FS_REF=4ce0d50fdbf9e3fdb270a14f7d7d9d9bdf3491b9
+ARG AGENT_FS_REF=525ffd82d65c30877b41660ab770324d1b8a6a25
 RUN git init /source \
     && git -C /source fetch --depth 1 https://github.com/ameesme/agent-fs.git "$AGENT_FS_REF" \
     && git -C /source checkout FETCH_HEAD \
