@@ -4,8 +4,10 @@
 # back to main, so delegation does not keep a chat request open.
 set -eu
 
-mkdir -p /run/agent-fs/outbox /data/.builds /data/.updates /data/.inbox
+mkdir -p /run/agent-fs/outbox /data/.builds /data/.updates /data/.inbox /data/.control
 docker rm -f main-chat >/dev/null 2>&1 || true
+# Booting starts a fresh main-chat, which already applies any pending reload.
+rm -f /data/.control/reload
 
 # Optional channels are separate commands, passed through by Compose.
 if [ "$#" -gt 0 ]; then
@@ -16,6 +18,43 @@ base_hash=$(find /agent-base -type f -exec sha256sum {} \; | sort | sha256sum | 
 
 running() {
     [ "$(docker inspect -f '{{.State.Running}}' "$1" 2>/dev/null)" = true ]
+}
+
+# Main asks for a reload, after the user confirms it, by writing /data/.control/reload.
+# Recreating main-chat applies its .env, soul, agent.json and skill mounts. Wait until
+# main is idle so the reply that wrote the request and any open TUI are not cut off.
+reload_interval=60
+reload_main() {
+    request=/data/.control/reload
+    [ -f "$request" ] || return 0
+    if ! grep -qx 'confirmed_by: user' "$request"; then
+        printf '%s rejected: request lacks the user confirmation\n' "$(date -u +%FT%TZ)" >> /data/.control/reload.log
+        rm -f "$request"
+        return 0
+    fi
+    last=$(cat /run/agent-fs/reloaded-at 2>/dev/null || echo 0)
+    [ $(($(date +%s) - last)) -ge "$reload_interval" ] || return 0
+
+    # chat-main backs off while this lock exists, and the lock waits for chat-main.
+    lock=/run/agent-fs/locks/.reload-main
+    mkdir -p /run/agent-fs/locks
+    mkdir "$lock" 2>/dev/null || return 0
+    for busy in /run/agent-fs/locks/main-*; do
+        [ ! -e "$busy" ] || { rmdir "$lock"; return 0; }
+    done
+    # The native TUI runs Pi without a lock. Exit 3 means a run is still open.
+    status=0
+    docker exec main-chat sh -c 'for process in /proc/[0-9]*; do
+            tr "\0" " " < "$process/cmdline" 2>/dev/null | grep -q "[a]gent-run" && exit 3
+        done; exit 0' >/dev/null 2>&1 || status=$?
+    [ "$status" != 3 ] || { rmdir "$lock"; return 0; }
+
+    reason=$(sed -n 's/^reason: //p' "$request" | head -n 1)
+    rm -f "$request"
+    if start-agent main >/dev/null; then result=reloaded; else result=failed; fi
+    date +%s > /run/agent-fs/reloaded-at
+    rmdir "$lock"
+    printf '%s %s main-chat: %s\n' "$(date -u +%FT%TZ)" "$result" "${reason:-no reason given}" | tee -a /data/.control/reload.log
 }
 
 notify_update() {
@@ -169,6 +208,7 @@ while :; do
         fi
 
         if [ "$name" = main ]; then
+            reload_main
             if ! running main-chat; then
                 start-agent main || true
             fi

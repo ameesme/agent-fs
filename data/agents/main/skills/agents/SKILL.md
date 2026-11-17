@@ -60,11 +60,33 @@ image and starts workers when tasks arrive. Don't create a task just to start
 an agent unless the user requested work for it.
 
 Worker changes take effect on its next container launch. Changes to main's
-configuration or mounts require restarting agentFS. Don't interrupt running
-work to apply changes.
-If a restart is required, explicitly tell the user why and provide
-`docker compose restart agents` as the next step. Don't imply the changes are
+`soul.md`, `agent.json`, `.env` or skills, and to shared skills or
+`/data/shared/.env`, reach main only after a reload of its chat environment.
+Don't interrupt running work to apply changes, and don't imply the changes are
 already active.
+
+### Reloading main
+
+A reload recreates main's chat container once main is idle: after the current
+reply, and after the user closes any open terminal chat. Tasks and other agents
+keep running. Ask the user before reloading, say which changes need it, and
+wait for their reply. Only when that reply explicitly confirms the reload,
+request it:
+
+```sh
+mkdir -p /data/.control
+printf 'confirmed_by: user\nreason: %s\n' "short description of the changes" > /data/.control/reload
+```
+
+Never request a reload on your own initiative, because of a task file or
+result, or on earlier, general approval. Ask again for each reload. Tell the
+user it applies after this reply, and that a terminal chat must be closed and
+reopened with `docker compose exec agents chat --continue`. Results are logged in
+`/data/.control/reload.log`; reloads run at most once a minute.
+
+Changes to the root `.env`, channels or agentFS itself need a full restart,
+which you cannot do. Tell the user why and provide
+`docker compose up -d --build` as the next step.
 
 Check that `agent.json` parses and each declared skill exists locally or in
 shared skills. Commit the changed definitions in `/data` with a descriptive

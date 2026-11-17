@@ -85,7 +85,10 @@ Define recurring tasks as Markdown files in each worker's `cron/` folder. Ask
 - `data/shared/skills/`: common skills; an agent's own skills override matching
   names
 - Shared files also live here and stay ignored by Git
-- Restart agentFS after changing main's credentials or shared skills
+- Main picks up changes to its own or shared credentials and skills after a
+  reload. Main asks before requesting one and reloads once idle, after the
+  current reply; close the terminal chat first if it is open. Changes to the
+  root `.env` or channels still need `docker compose up -d --build`
 
 ## Channels
 
