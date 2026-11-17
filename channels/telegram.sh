@@ -123,14 +123,15 @@ show_tool_calls() {
         calls=$(tail -n "+$((seen + 1))" "$session" | jq -Rr 'fromjson? | select(.type == "message" and .message.role == "assistant")
             | .message.content[]? | select(.type == "toolCall")
             | ((.arguments // {}) | .command // .path // tojson | tostring | gsub("\\s+"; " ")) as $call
-            | "→ \(.name) \(if ($call | length) > 80 then $call[0:80] + "…" else $call end)"' | tail -n 30)
+            | (if ($call | length) > 80 then $call[0:80] + "…" else $call end) as $short
+            | @html "→ \(.name) <code>\($short)</code>" | gsub("&apos;"; "&#39;")' | tail -n 30)
         [ -n "$calls" ] && [ "$calls" != "$shown" ] || continue
         if [ -z "$status_id" ]; then
             status_id=$(telegram sendMessage "$(jq -cn --arg chat "$1" --arg text "$calls" \
-                '{chat_id:$chat, text:$text, link_preview_options:{is_disabled:true}}')" | jq -r '.result.message_id // empty')
+                '{chat_id:$chat, text:$text, parse_mode:"HTML", link_preview_options:{is_disabled:true}}')" | jq -r '.result.message_id // empty')
         else
             telegram editMessageText "$(jq -cn --arg chat "$1" --argjson id "$status_id" --arg text "$calls" \
-                '{chat_id:$chat, message_id:$id, text:$text, link_preview_options:{is_disabled:true}}')" >/dev/null || true
+                '{chat_id:$chat, message_id:$id, text:$text, parse_mode:"HTML", link_preview_options:{is_disabled:true}}')" >/dev/null || true
         fi
         shown=$calls
     done
