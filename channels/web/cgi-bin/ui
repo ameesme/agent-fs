@@ -140,7 +140,8 @@ show_files() {
     printf '<section id="files"><ul>'
     cd "$agents/$agent"
     files | while IFS= read -r file; do
-        token=$(printf '%s' "$file" | base64 | tr -d '\n' | tr '+/' '-_')
+        # Home Assistant's ingress re-encodes "=" in query values, so tokens carry no padding.
+        token=$(printf '%s' "$file" | base64 | tr -d '\n=' | tr '+/' '-_')
         printf '<li><button hx-get="cgi-bin/ui?do=file&amp;a=%s&amp;f=%s" hx-target="#file">%s</button></li>' "$agent" "$token" "$(printf '%s' "$file" | html)"
     done
     printf '</ul><pre id="file">Select a file.</pre></section>'
@@ -148,7 +149,9 @@ show_files() {
 
 show_file() {
     cd "$agents/$agent"
-    file=$(param f | tr '_-' '/+' | base64 -d 2>/dev/null) || fail 'Invalid file'
+    token=$(param f | tr '_-' '/+')
+    while [ $((${#token} % 4)) -ne 0 ]; do token="$token="; done
+    file=$(printf '%s' "$token" | base64 -d 2>/dev/null) || fail 'Invalid file'
     # Only files the listing offers may be read, so a crafted token cannot escape the agent folder.
     files | grep -Fxq -- "$file" || fail 'Unknown file'
     header
