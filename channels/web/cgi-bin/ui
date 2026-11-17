@@ -107,8 +107,8 @@ chat() {
     messages "${1:-}"
     if writable "$conversation"; then
         printf '<div id="busy" role="status" aria-label="%s is working"><span></span><span></span><span></span></div>' "$agent"
-        printf '<form class="send" hx-post="cgi-bin/ui?do=send&amp;a=%s&amp;c=%s" hx-ext="json-enc" hx-target="#chat" hx-swap="outerHTML" hx-indicator="#busy" hx-disabled-elt="find button" hx-on::before-request="this.reset()">' "$agent" "$conversation"
-        printf '<input name="text" required autocomplete="off" aria-label="Message" placeholder="Message %s, or /help"><button>Send</button></form>' "$agent"
+        printf '<form class="send" hx-post="cgi-bin/ui?do=send&amp;a=%s&amp;c=%s" hx-ext="json-enc" hx-target="#messages" hx-swap="outerHTML" hx-indicator="#busy" hx-on::before-request="sending(this)">' "$agent" "$conversation"
+        printf '<textarea name="text" rows="1" required autocomplete="off" aria-label="Message" placeholder="Message %s, or /help"></textarea><button>Send</button></form>' "$agent"
     else
         printf '<p class="note send">Read-only: this session belongs to another channel.</p>'
     fi
@@ -125,19 +125,33 @@ fresh() {
 send() {
     writable "$conversation" || fail 'This session is read-only'
     text=$(head -c "${CONTENT_LENGTH:-0}" | jq -r '.text // ""')
-    case "${text%% *}" in
+    # Commands re-render the whole chat; messages only refresh the conversation so the draft is untouched.
+    case "$text" in /*) printf 'HX-Retarget: #chat\r\n' ;; esac
+    case "${text%%[[:space:]]*}" in
         /help|/start) chat "$help" ;;
         /new|/reset) fresh; chat ;;
         /*) chat 'Unknown command. Use /help to see available commands.' ;;
         *)
             before=$(version)
+            header
             # Pi records its own errors in the session; only report failures that never reached it.
             if output=$(printf '%s' "$text" | chat-main "$conversation" "$agent" 2>&1) || [ "$(version)" != "$before" ]; then
-                chat
+                messages
             else
-                chat "$agent unreachable: $(printf '%s' "$output" | tail -n 3)"
+                messages "$agent unreachable: $(printf '%s' "$output" | tail -n 3)"
             fi ;;
     esac
+}
+
+# Interrupt the reply in progress; the pending send request then returns what Pi saved.
+stop() {
+    writable "$conversation" || fail 'This session is read-only'
+    # Agent images lack pkill, so find the run by its session argument.
+    docker exec -e "AGENT_FS_SESSION=/agent/home/.pi/channel-sessions/$conversation.jsonl" "$agent-chat" sh -c '
+        for process in /proc/[0-9]*; do
+            tr "\0" " " < "$process/cmdline" 2>/dev/null | grep -qF -- "--session $AGENT_FS_SESSION" && kill -INT "${process#/proc/}" 2>/dev/null
+        done; true' >/dev/null 2>&1 || true
+    printf 'Status: 204 No Content\r\n\r\n'
 }
 
 # Confine every path to agent and shared files after resolving symlinks.
@@ -268,5 +282,6 @@ case "$action" in
             messages
         fi ;;
     send) send ;;
+    stop) stop ;;
     *) fail 'Unknown action' ;;
 esac

@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.3.0
+
+### Added
+
+- Web chat supports multiline messages (Shift+Enter), shows sent messages
+  immediately, and offers a stop button while a reply is running.
+- Main can reload its chat environment, after you confirm it, to apply changes
+  to its instructions, skills and credentials without restarting agentFS. It
+  writes `/data/.control/reload`; the runtime recreates main's chat container
+  once main is idle, at most once a minute, and logs to
+  `/data/.control/reload.log`.
+
+### Fixed
+
+- Web chat polling skips updates while text in the conversation is selected.
+
+### Upgrading
+
+Run `docker compose up -d --build` to rebuild and recreate the runtime.
+
 ## 0.2.1
 
 ### Fixed
