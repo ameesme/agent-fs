@@ -105,9 +105,9 @@ http://localhost:8080. To run Telegram too, use
 `CHANNEL_COMMAND=sh /channels/web.sh sh /channels/telegram.sh`.
 
 Chat with any agent, with `/new`, `/reset` and `/help`. Other channels'
-conversations, such as Telegram, are shown read-only. The files view shows each
-agent's config, soul, memory, cron, skills and Kanban. There is no login, so
-keep the port on localhost.
+conversations, such as Telegram, are shown read-only. Files browses agent and
+shared files, with upload, download and delete; `.env` files stay hidden. There
+is no login, so keep the port on localhost.
 
 [MIT](LICENSE).
 

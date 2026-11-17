@@ -1,5 +1,5 @@
 #!/bin/sh
-# Render htmx fragments for per-agent chat and a read-only view of agent files.
+# Render htmx views for per-agent chat and a file explorer over agent and shared files.
 set -eu
 
 agents=/data/agents
@@ -45,20 +45,27 @@ fail() {
     exit 0
 }
 
-list_agents() {
-    header
-    printf '<ul>'
-    for config in "$agents"/*/agent.json; do
-        dir=${config%/agent.json}
-        name=${dir##*/}
-        safe "$name" && [ -f "$dir/Dockerfile" ] || continue
-        printf '<li><strong>%s</strong> <button hx-get="cgi-bin/ui?do=chat&amp;a=%s" hx-target="#view">chat</button> <button hx-get="cgi-bin/ui?do=files&amp;a=%s" hx-target="#view">files</button></li>' "$name" "$name" "$name"
-    done
-    printf '</ul>'
+# Home Assistant's ingress re-encodes "=" in query values, so tokens carry no padding.
+encode() {
+    printf '%s' "$1" | base64 | tr -d '\n=' | tr '+/' '-_'
+}
+
+decode() {
+    token=$(printf '%s' "$1" | tr '_-' '/+')
+    while [ $((${#token} % 4)) -ne 0 ]; do token="$token="; done
+    printf '%s' "$token" | base64 -d 2>/dev/null
 }
 
 current() {
     printf 'web-%s-%s' "$agent" "$(cat "/data/.web/$agent" 2>/dev/null || printf 0)"
+}
+
+recent() {
+    ls -t "$sessions" 2>/dev/null | sed -n 's/\.jsonl$//p' | grep -xE '[a-zA-Z0-9_-]+' || true
+}
+
+writable() {
+    case "$1" in web-*) return 0 ;; *) return 1 ;; esac
 }
 
 version() {
@@ -78,27 +85,34 @@ messages() {
 
 chat() {
     header
-    printf '<section id="chat"><select name="c" aria-label="Conversation" hx-get="cgi-bin/ui?do=chat&amp;a=%s" hx-target="#chat" hx-swap="outerHTML">' "$agent"
-    { printf '%s\n%s\n' "$conversation" "$(current)"; ls -t "$sessions" 2>/dev/null | sed -n 's/\.jsonl$//p'; } \
-        | awk '!seen[$0]++' | grep -xE '[a-zA-Z0-9_-]+' | head -n 20 | while read -r option; do
+    printf '<section id="chat" data-hash="chat/%s/%s"><div class="bar"><select name="a" aria-label="Agent" hx-get="cgi-bin/ui?do=chat" hx-target="#chat" hx-swap="outerHTML">' "$agent" "$conversation"
+    for config in "$agents"/*/agent.json; do
+        name=${config%/agent.json}
+        name=${name##*/}
+        safe "$name" && [ -f "$agents/$name/Dockerfile" ] || continue
+        selected=
+        [ "$name" != "$agent" ] || selected=' selected'
+        printf '<option%s>%s</option>' "$selected" "$name"
+    done
+    printf '</select><select name="c" aria-label="Session" hx-get="cgi-bin/ui?do=chat&amp;a=%s" hx-target="#chat" hx-swap="outerHTML">' "$agent"
+    { current; printf '\n'; recent; printf '%s\n' "$conversation"; } | awk '!seen[$0]++' | head -n 30 | while read -r option; do
+        label="$option (new)"
+        [ ! -f "$sessions/$option.jsonl" ] || label="$option · $(date -r "$sessions/$option.jsonl" '+%d-%m %H:%M')"
+        writable "$option" || label="$label · read-only"
         selected=
         [ "$option" != "$conversation" ] || selected=' selected'
-        label=$option
-        writable "$option" || label="$option (read-only)"
         printf '<option value="%s"%s>%s</option>' "$option" "$selected" "$label"
     done
-    printf '</select>'
+    printf '</select></div>'
     messages "${1:-}"
-    if ! writable "$conversation"; then
-        printf '<p class="note">Read-only: this conversation belongs to another channel.</p></section>'
-        return
+    if writable "$conversation"; then
+        printf '<div id="busy" role="status" aria-label="%s is working"><span></span><span></span><span></span></div>' "$agent"
+        printf '<form class="send" hx-post="cgi-bin/ui?do=send&amp;a=%s&amp;c=%s" hx-ext="json-enc" hx-target="#chat" hx-swap="outerHTML" hx-indicator="#busy" hx-disabled-elt="find button" hx-on::before-request="this.reset()">' "$agent" "$conversation"
+        printf '<input name="text" required autocomplete="off" aria-label="Message" placeholder="Message %s, or /help"><button>Send</button></form>' "$agent"
+    else
+        printf '<p class="note send">Read-only: this session belongs to another channel.</p>'
     fi
-    printf '<form hx-post="cgi-bin/ui?do=send&amp;a=%s&amp;c=%s" hx-ext="json-enc" hx-target="#chat" hx-swap="outerHTML" hx-disabled-elt="find input, find button">' "$agent" "$conversation"
-    printf '<input name="text" required autocomplete="off" autofocus aria-label="Message" placeholder="Message %s, or /help"><button>Send</button><span class="htmx-indicator">%s is thinking…</span></form></section>' "$agent" "$agent"
-}
-
-writable() {
-    case "$1" in web-*) return 0 ;; *) return 1 ;; esac
+    printf '</section>'
 }
 
 fresh() {
@@ -109,7 +123,7 @@ fresh() {
 }
 
 send() {
-    writable "$conversation" || fail 'This conversation is read-only'
+    writable "$conversation" || fail 'This session is read-only'
     text=$(head -c "${CONTENT_LENGTH:-0}" | jq -r '.text // ""')
     case "${text%% *}" in
         /help|/start) chat "$help" ;;
@@ -126,48 +140,122 @@ send() {
     esac
 }
 
+# Confine every path to agent and shared files after resolving symlinks, and never expose .env files.
+resolve() {
+    relative=$(decode "$(param p)") || fail 'Invalid path'
+    entry=/data/$relative
+    path=/data
+    [ -n "$relative" ] || return 0
+    path=$(realpath "$entry" 2>/dev/null) || fail 'Not found'
+    case "$path" in
+        /data/agents|/data/agents/*|/data/shared|/data/shared/*) ;;
+        *) fail 'Outside agentFS files' ;;
+    esac
+    [ "${path##*/}" != .env ] && [ "${entry##*/}" != .env ] || fail 'Hidden file'
+}
+
+# List a folder as tree items; folders load their children when first opened.
+items() {
+    if [ "$1" = /data ]; then set -- /data/agents /data/shared; else set -- "$1"/.* "$1"/*; fi
+    stat -L -c '%F	%s	%n' -- "$@" 2>/dev/null | while IFS='	' read -r type size item; do
+        [ "$type" != directory ] || size=$(ls -A "$item" 2>/dev/null | grep -cvx .env || true)
+        printf '%s\t%s\t%s\n' "$type" "$size" "$item"
+    done | jq -Rrn '[inputs | capture("^(?<type>[^\t]*)\t(?<size>[0-9]+)\t(?<path>.*)$")
+        | (.path | split("/") | last) as $name | select($name != "." and $name != ".." and $name != ".env")
+        | . + {name: $name, rel: (.path | ltrimstr("/data/"))}
+        | .token = (.rel | @base64 | gsub("="; "") | gsub("\\+"; "-") | gsub("/"; "_"))]
+        | sort_by(.type != "directory") | .[]
+        | if .type == "directory" then
+            @html "<li><details hx-get=\"cgi-bin/ui?do=tree&amp;p=\(.token)\" hx-trigger=\"toggle once\" hx-target=\"find ul\"><summary data-dir=\"\(.token)\" data-path=\"\(.rel)\"><span class=\"name\">\(.name)</span><span class=\"size\">\(.size)</span></summary><ul id=\"t-\(.token)\"></ul></details></li>"
+          else
+            "<li><a href=\"#files/\(.rel | split("/") | map(@uri) | join("/"))\"><span class=\"name\">\(.name | @html)</span><span class=\"size\">\(((.size | tonumber) + 1023) / 1024 | floor) KB</span></a></li>"
+          end'
+}
+
+sheet() {
+    rel=$(printf '%s' "$relative" | html)
+    token=$(encode "$relative")
+    printf '<div class="bar" data-hash="files/%s"><strong class="path">%s</strong><a class="button" href="#files">Close</a></div><div class="list">' "$rel" "$rel"
+    if [ "$(head -c 8000 "$path" | tr -dc '\000' | wc -c)" -gt 0 ]; then
+        printf '<p class="note">Binary file; use Download.</p>'
+    else
+        printf '<pre class="file">%s</pre>' "$(head -c 524288 "$path" | html)"
+        [ "$(stat -c %s "$path")" -le 524288 ] || printf '<p class="note">Showing the first 512 KB; use Download for the rest.</p>'
+    fi
+    printf '</div><div class="bottom"><a class="button" href="cgi-bin/ui?do=raw&amp;p=%s" download>Download</a>' "$token"
+    printf '<button class="button" hx-post="cgi-bin/ui?do=rm&amp;p=%s" hx-swap="none" hx-confirm="Delete %s?" hx-on::after-request="if (event.detail.successful) { refresh('"'"'%s'"'"'); location.hash = '"'"'files'"'"' }">Delete</button></div>' "$token" "$rel" "$(encode "${relative%/*}")"
+}
+
 files() {
-    for file in agent.json soul.md home/memory.md cron/*.md skills/*/SKILL.md scripts/* \
-        kanban/backlog/*.md kanban/todo/*.md kanban/in-progress/*.md kanban/blocked/*.md kanban/done/*.md; do
-        if [ -f "$agents/$agent/$file" ] && [ ! -L "$agents/$agent/$file" ]; then
-            printf '%s\n' "$file"
-        fi
-    done
+    header
+    printf '<section id="files" data-hash="files"><ul class="tree list" id="t-">'
+    items /data
+    printf '</ul><div class="bottom"><span id="target">Select a folder</span>'
+    printf '<button class="button icon" disabled onclick="makeFolder()" title="New folder" aria-label="New folder"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM12 10v6M9 13h6"/></svg></button><label class="button icon" title="Upload" aria-label="Upload"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V4M7 9l5-5 5 5M4 20h16"/></svg><input type="file" hidden disabled onchange="upload(this)"></label></div><div id="sheet">'
+    [ ! -f "$path" ] || sheet
+    printf '</div></section>'
 }
 
-show_files() {
-    header
-    printf '<section id="files"><ul>'
-    cd "$agents/$agent"
-    files | while IFS= read -r file; do
-        # Home Assistant's ingress re-encodes "=" in query values, so tokens carry no padding.
-        token=$(printf '%s' "$file" | base64 | tr -d '\n=' | tr '+/' '-_')
-        printf '<li><button hx-get="cgi-bin/ui?do=file&amp;a=%s&amp;f=%s" hx-target="#file">%s</button></li>' "$agent" "$token" "$(printf '%s' "$file" | html)"
-    done
-    printf '</ul><pre id="file">Select a file.</pre></section>'
+download() {
+    [ -f "$path" ] || fail 'Not a file'
+    printf 'Content-Type: application/octet-stream\r\nContent-Disposition: attachment; filename="%s"\r\n\r\n' "$(printf '%s' "${path##*/}" | tr -c 'A-Za-z0-9._-' '_')"
+    cat "$path"
 }
 
-show_file() {
-    cd "$agents/$agent"
-    token=$(param f | tr '_-' '/+')
-    while [ $((${#token} % 4)) -ne 0 ]; do token="$token="; done
-    file=$(printf '%s' "$token" | base64 -d 2>/dev/null) || fail 'Invalid file'
-    # Only files the listing offers may be read, so a crafted token cannot escape the agent folder.
-    files | grep -Fxq -- "$file" || fail 'Unknown file'
-    header
-    html < "$agents/$agent/$file"
+new_name() {
+    [ -d "$path" ] && [ "$path" != /data ] || fail 'Choose a folder first'
+    name=$(decode "$(param n)") || fail 'Invalid name'
+    case "$name" in ''|.|..|.env|*/*) fail 'Invalid name' ;; esac
+}
+
+upload() {
+    new_name
+    [ ! -d "$path/$name" ] || fail 'A folder has that name'
+    temporary=$(mktemp "$path/.upload.XXXXXX")
+    head -c "${CONTENT_LENGTH:-0}" > "$temporary"
+    # Give uploads to the folder's owner so non-root agents can use them.
+    chmod 644 "$temporary"
+    chown "$(stat -c %u:%g "$path")" "$temporary"
+    mv "$temporary" "$path/$name"
+    printf 'Status: 204 No Content\r\n\r\n'
+}
+
+make_folder() {
+    new_name
+    [ ! -e "$path/$name" ] || fail 'That name is taken'
+    mkdir "$path/$name"
+    chown "$(stat -c %u:%g "$path")" "$path/$name"
+    printf 'Status: 204 No Content\r\n\r\n'
+}
+
+remove() {
+    [ ! -d "$path" ] || fail 'Only files can be deleted'
+    rm -f -- "$entry"
+    printf 'Status: 204 No Content\r\n\r\n'
 }
 
 action=$(param do)
-if [ "$action" = agents ]; then
-    list_agents
-    exit 0
-fi
+case "$action" in
+    open|tree|file|raw|upload|mkdir|rm)
+        resolve
+        case "$action" in
+            open) files ;;
+            tree) [ -d "$path" ] || fail 'Not a folder'; header; items "${entry%/}" ;;
+            file) [ -f "$path" ] || fail 'Not a file'; header; sheet ;;
+            raw) download ;;
+            upload) upload ;;
+            mkdir) make_folder ;;
+            rm) remove ;;
+        esac
+        exit 0 ;;
+esac
 
 agent=$(param a)
+[ -n "$agent" ] || agent=main
 safe "$agent" && [ -f "$agents/$agent/agent.json" ] || fail 'Unknown agent'
 sessions=$agents/$agent/home/.pi/channel-sessions
 conversation=$(param c)
+[ -n "$conversation" ] || conversation=$(recent | head -n 1)
 [ -n "$conversation" ] || conversation=$(current)
 safe "$conversation" || fail 'Invalid conversation'
 
@@ -181,7 +269,5 @@ case "$action" in
             messages
         fi ;;
     send) send ;;
-    files) show_files ;;
-    file) show_file ;;
     *) fail 'Unknown action' ;;
 esac
