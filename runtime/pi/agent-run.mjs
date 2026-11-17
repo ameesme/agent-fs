@@ -12,14 +12,18 @@ const prompts = [config.instruction, existsSync('/agent/soul.md') && '/agent/sou
 // Load only the resources declared by agentFS, rather than discovering them.
 const piArguments = [
   '--no-extensions',
-  '--no-mcp',
   '--no-context-files',
   '--no-prompt-templates',
   '--no-skills',
   '--extension', '/usr/local/lib/agent-fs/agentFS.mjs',
   '--system-prompt', prompts[0] ?? '',
-  '--tools', config.tools.join(','),
+  '--tools', [...config.tools, ...(config.mcpServers ? ['codemode'] : [])].join(','),
 ];
+
+// MCP servers from agent.json reach the model through codemode scripts.
+if (config.mcpServers) {
+  piArguments.push('--extension', 'builtin:mcp', '--extension', 'builtin:codemode');
+}
 
 if (prompts[1]) {
   piArguments.push('--append-system-prompt', prompts[1]);

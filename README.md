@@ -61,7 +61,9 @@ The agent's role and instructions in Markdown; Pi uses it as the system prompt.
 **agent.json**
 
 `agent.json` is agentFS's configuration for Pi. It defines the agent's tools,
-skills and optional model. Add skills under `skills/` as needed.
+skills, MCP servers and optional model. Add skills under `skills/` as needed.
+MCP servers go under `mcpServers`, as in other MCP clients; `${NAME}` takes a
+value from the agent's `.env`.
 
 **Dockerfile**
 

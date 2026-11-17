@@ -79,10 +79,21 @@ function describeAgents(agentsDirectory) {
   return agents.length > 0 ? agents.join('\n') : 'No agents available.';
 }
 
+// Credentials stay in the agent's .env; agent.json refers to them as ${NAME}.
+function expandEnv(value) {
+  if (typeof value === 'string') return value.replace(/\$\{(\w+)\}/g, (_, name) => process.env[name] ?? '');
+  if (Array.isArray(value)) return value.map(expandEnv);
+  if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, expandEnv(item)]));
+  return value;
+}
+
 export default function agentFs(pi) {
   const configPath = process.env.AGENT_FS_CONFIG || '/agent/agent.json';
   const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
   const inboxRoot = process.env.AGENT_FS_INBOX || '/data/.inbox';
+  for (const [name, server] of Object.entries(config.mcpServers || {})) {
+    pi.registerMcpServer(name, expandEnv(server));
+  }
   let updateTimer;
 
   pi.on('before_agent_start', (event, context) => {

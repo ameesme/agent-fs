@@ -36,6 +36,9 @@ And its `agent.json`:
 ```
 
 Tailor the role, instructions and tools to the request. `model` is optional.
+For MCP servers, add `mcpServers` to `agent.json` in the usual format. Refer to
+credentials as `${NAME}` and keep their values in the agent's `.env`. The agent
+reaches their tools through codemode.
 
 Start the Dockerfile with `FROM agent-base`. Add software with `RUN` as needed;
 the build receives only the Dockerfile, so `COPY` from the agent folder won't
