@@ -111,6 +111,31 @@ start_typing() {
     typing_pid=$!
 }
 
+show_tool_calls() {
+    session=/data/agents/main/home/.pi/channel-sessions/$2.jsonl
+    seen=0
+    [ ! -f "$session" ] || seen=$(wc -l < "$session")
+    status_id=
+    shown=
+    while kill -0 "$3" 2>/dev/null; do
+        sleep 2
+        [ -f "$session" ] || continue
+        calls=$(tail -n "+$((seen + 1))" "$session" | jq -Rr 'fromjson? | select(.type == "message" and .message.role == "assistant")
+            | .message.content[]? | select(.type == "toolCall")
+            | ((.arguments // {}) | .command // .path // tojson | tostring | gsub("\\s+"; " ")) as $call
+            | "→ \(.name) \(if ($call | length) > 80 then $call[0:80] + "…" else $call end)"' | tail -n 30)
+        [ -n "$calls" ] && [ "$calls" != "$shown" ] || continue
+        if [ -z "$status_id" ]; then
+            status_id=$(telegram sendMessage "$(jq -cn --arg chat "$1" --arg text "$calls" \
+                '{chat_id:$chat, text:$text, link_preview_options:{is_disabled:true}}')" | jq -r '.result.message_id // empty')
+        else
+            telegram editMessageText "$(jq -cn --arg chat "$1" --argjson id "$status_id" --arg text "$calls" \
+                '{chat_id:$chat, message_id:$id, text:$text, link_preview_options:{is_disabled:true}}')" >/dev/null || true
+        fi
+        shown=$calls
+    done
+}
+
 echo 'telegram channel up; only allowlisted chats can send work'
 commands='{"commands":[{"command":"start","description":"Show how to chat with main"},{"command":"help","description":"Show commands and voice note help"},{"command":"new","description":"Start a fresh conversation"},{"command":"reset","description":"Reset the current conversation"}]}'
 telegram setMyCommands "$commands" >/dev/null || echo 'telegram: could not register commands' >&2
@@ -179,13 +204,18 @@ $transcript"
         fi
         [ -n "$text" ] || continue
         start_typing "$chat"
-        if reply=$(printf '%s' "$text" | chat-main "telegram-$chat-$reset"); then
+        reply=$(mktemp)
+        printf '%s' "$text" | chat-main "telegram-$chat-$reset" > "$reply" &
+        worker=$!
+        show_tool_calls "$chat" "telegram-$chat-$reset" "$worker"
+        if wait "$worker"; then
             stop_typing
-            send "$chat" "$reply" || true
+            send "$chat" "$(cat "$reply")" || true
         else
             stop_typing
             send "$chat" 'main unreachable' || true
         fi
+        rm -f "$reply"
     done
     for message in /run/agent-fs/outbox/telegram-*/*.txt; do
         [ -f "$message" ] || continue
