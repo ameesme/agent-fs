@@ -8,8 +8,6 @@ services:
         required: false
     environment:
       TZ: ${TZ:-UTC}
-    ports:
-      - "127.0.0.1:8080:8080"
     volumes:
       - agents-data:/data
       - ./data/agents:/data/agents
