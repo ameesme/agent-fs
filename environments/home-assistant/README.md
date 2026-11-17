@@ -40,6 +40,6 @@ unchanged. Configuration entries in `environment` generate
 Use single-line, unquoted values, as with Docker env files.
 
 Telegram is optional; leave both Telegram fields empty to run only scheduled
-tasks. The agentFS sidebar panel has per-agent chat and a read-only view of
-agent files, behind Home Assistant's login. The existing Compose installation
+tasks. The agentFS sidebar panel has per-agent chat and a file explorer for
+agent and shared files, behind Home Assistant's login. The existing Compose installation
 and CLI continue to work as before.
