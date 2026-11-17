@@ -9,6 +9,8 @@ dockerd_pid=$!
 
 mkdir -p /data/agents /data/shared/files
 chmod 1777 /data/shared/files
+# Older versions mounted skills inside agent homes, leaving empty folders behind.
+rmdir /data/agents/*/home/.agents/skills/* /data/agents/*/home/.agents/skills /data/agents/*/home/.agents 2>/dev/null || true
 cp /etc/agent-fs.gitignore /data/.gitignore
 
 git config --global --add safe.directory /data

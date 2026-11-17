@@ -24,7 +24,7 @@ if (model) {
 }
 
 for (const skill of config.skills || []) {
-  piArguments.push('--skill', `/agent/home/.agents/skills/${skill}`);
+  piArguments.push('--skill', `/agent/skills/${skill}`);
 }
 
 // Pass through the caller's mode, session options and prompts.

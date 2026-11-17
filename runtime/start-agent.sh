@@ -59,7 +59,7 @@ for skill in /data/shared/skills/* "$agent"/skills/*; do
     case "$skill" in
         /data/shared/*) [ ! -f "$agent/skills/$skill_name/SKILL.md" ] || continue ;;
     esac
-    set -- "$@" -v "$skill:/agent/home/.agents/skills/$skill_name:ro"
+    set -- "$@" -v "$skill:/agent/skills/$skill_name:ro"
 done
 
 if [ "$mode" = chat ]; then
