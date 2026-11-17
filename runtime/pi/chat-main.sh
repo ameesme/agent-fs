@@ -7,14 +7,14 @@ agent=${2:-main}
 case "$conversation$agent" in
     *[!a-zA-Z0-9_-]*) echo 'Invalid conversation or agent id' >&2; exit 1 ;;
 esac
-container=main-chat
+container=$agent-chat
 note=
 if [ "$agent" != main ]; then
-    container=$agent-chat
     # Worker instructions assume a queued task file, which a chat does not have.
     note='This is a direct chat with the user, not a queued task: there is no task file, so reply in the chat.'
-    [ "$(docker inspect -f '{{.State.Running}}' "$container" 2>/dev/null)" = true ] || start-agent "$agent" chat >/dev/null
 fi
+# A rebuilt image only reaches a chat through a new container.
+[ "$(docker inspect -f '{{.State.Running}} {{.Image}}' "$container" 2>/dev/null)" = "true $(docker image inspect -f '{{.Id}}' "agent-$agent")" ] || start-agent "$agent" chat >/dev/null
 
 text=$(cat)
 case "$conversation" in
