@@ -33,13 +33,13 @@ fi
 TELEGRAM_BOT_TOKEN=$(jq -r '.telegram_bot_token // ""' /data/options.json)
 TELEGRAM_CHAT_IDS=$(jq -r '.telegram_chat_ids // ""' /data/options.json)
 export TELEGRAM_BOT_TOKEN TELEGRAM_CHAT_IDS
-set --
+set -- sh /channels/web.sh
 if [ -n "$TELEGRAM_BOT_TOKEN" ]; then
     if [ -z "$TELEGRAM_CHAT_IDS" ]; then
         echo 'Set telegram_chat_ids before enabling Telegram.' >&2
         exit 1
     fi
-    set -- sh /channels/telegram.sh
+    set -- "$@" sh /channels/telegram.sh
 fi
 
 exec boot.sh "$@"

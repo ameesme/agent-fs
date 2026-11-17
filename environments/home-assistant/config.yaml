@@ -1,5 +1,5 @@
 name: agentFS
-version: "0.1.5"
+version: "0.1.6"
 slug: agent_fs
 description: Filesystem-based orchestration for AI agents
 url: https://github.com/ameesme/agent-fs
@@ -9,6 +9,10 @@ arch:
 startup: application
 boot: auto
 stage: experimental
+ingress: true
+ingress_port: 8080
+panel_icon: mdi:robot
+panel_title: agentFS
 # Device access and Linux capabilities are separate Supervisor settings.
 full_access: true
 apparmor: false
