@@ -1,6 +1,6 @@
 FROM docker:28-dind
 
-RUN apk add --no-cache git curl jq tzdata
+RUN apk add --no-cache git curl jq tzdata busybox-extras
 ENV DOCKER_TLS_CERTDIR=""
 
 COPY runtime/boot.sh /usr/local/bin/

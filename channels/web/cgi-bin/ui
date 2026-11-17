@@ -1,0 +1,184 @@
+#!/bin/sh
+# Render htmx fragments for per-agent chat and a read-only view of agent files.
+set -eu
+
+agents=/data/agents
+help='/new: start a fresh conversation
+/reset: same as /new
+/help: show this help'
+# Pi appends to session files while we read them, so skip a partially written last line.
+render='[inputs | fromjson? | select(.type == "message") | .message] as $messages
+    | ($messages | map(select(.role == "toolResult") | {key: .toolCallId, value: ([.content[]? | .text? // empty] | join("\n"))}) | from_entries) as $results
+    | [$messages[]
+    | if .role == "user" then
+        (.content | if type == "string" then . else map(select(.type == "text") | .text) | join("\n") end) as $text
+        | if ($text | test("^(Task update|Scheduled task completed):")) then @html "<p class=\"note\">\($text | split("\n")[0])</p>"
+          else @html "<p class=\"user\">\($text)</p>" end
+      elif .role == "assistant" then
+        (.content[]? | if .type == "toolCall" then
+                ((.arguments // {}) | .command // .path // tojson | tostring) as $call
+                | @html "<details class=\"tool\"><summary>→ \(.name) \($call | gsub("\\s+"; " ") | .[0:300])</summary><pre>\($call | .[0:2000])\n\n\($results[.id // ""] // "…" | .[0:4000])</pre></details>"
+            elif .type == "text" and .text != "" then @html "<p>\(.text)</p>"
+            else empty end),
+        (.errorMessage // empty | @html "<p class=\"error\">\(.)</p>")
+      else empty end]
+    | reverse | join("")'
+
+param() {
+    printf '%s' "${QUERY_STRING:-}" | tr '&' '\n' | sed -n "s/^$1=//p" | head -n 1
+}
+
+safe() {
+    case "$1" in ''|*[!a-zA-Z0-9_-]*) return 1 ;; esac
+}
+
+html() {
+    jq -Rrs @html
+}
+
+header() {
+    printf 'Content-Type: text/html; charset=utf-8\r\n\r\n'
+}
+
+fail() {
+    printf 'Status: 400 Bad Request\r\nContent-Type: text/plain\r\n\r\n%s\n' "$1"
+    exit 0
+}
+
+list_agents() {
+    header
+    printf '<ul>'
+    for config in "$agents"/*/agent.json; do
+        dir=${config%/agent.json}
+        name=${dir##*/}
+        safe "$name" && [ -f "$dir/Dockerfile" ] || continue
+        printf '<li><strong>%s</strong> <button hx-get="cgi-bin/ui?do=chat&amp;a=%s" hx-target="#view">chat</button> <button hx-get="cgi-bin/ui?do=files&amp;a=%s" hx-target="#view">files</button></li>' "$name" "$name" "$name"
+    done
+    printf '</ul>'
+}
+
+current() {
+    printf 'web-%s-%s' "$agent" "$(cat "/data/.web/$agent" 2>/dev/null || printf 0)"
+}
+
+version() {
+    stat -c %s-%Y "$sessions/$conversation.jsonl" 2>/dev/null || printf 0
+}
+
+messages() {
+    printf '<div id="messages" hx-get="cgi-bin/ui?do=messages&amp;a=%s&amp;c=%s&amp;v=%s" hx-trigger="every 2s" hx-swap="outerHTML">' "$agent" "$conversation" "$(version)"
+    if [ -n "${1:-}" ]; then
+        printf '<p class="note">%s</p>' "$(printf '%s' "$1" | html)"
+    fi
+    if [ -f "$sessions/$conversation.jsonl" ]; then
+        jq -Rrn "$render" "$sessions/$conversation.jsonl"
+    fi
+    printf '</div>'
+}
+
+chat() {
+    header
+    printf '<section id="chat"><select name="c" aria-label="Conversation" hx-get="cgi-bin/ui?do=chat&amp;a=%s" hx-target="#chat" hx-swap="outerHTML">' "$agent"
+    { printf '%s\n%s\n' "$conversation" "$(current)"; ls -t "$sessions" 2>/dev/null | sed -n 's/\.jsonl$//p'; } \
+        | awk '!seen[$0]++' | grep -xE '[a-zA-Z0-9_-]+' | head -n 20 | while read -r option; do
+        selected=
+        [ "$option" != "$conversation" ] || selected=' selected'
+        label=$option
+        writable "$option" || label="$option (read-only)"
+        printf '<option value="%s"%s>%s</option>' "$option" "$selected" "$label"
+    done
+    printf '</select>'
+    messages "${1:-}"
+    if ! writable "$conversation"; then
+        printf '<p class="note">Read-only: this conversation belongs to another channel.</p></section>'
+        return
+    fi
+    printf '<form hx-post="cgi-bin/ui?do=send&amp;a=%s&amp;c=%s" hx-ext="json-enc" hx-target="#chat" hx-swap="outerHTML" hx-disabled-elt="find input, find button">' "$agent" "$conversation"
+    printf '<input name="text" required autocomplete="off" autofocus aria-label="Message" placeholder="Message %s, or /help"><button>Send</button><span class="htmx-indicator">%s is thinking…</span></form></section>' "$agent" "$agent"
+}
+
+writable() {
+    case "$1" in web-*) return 0 ;; *) return 1 ;; esac
+}
+
+fresh() {
+    reset=$(($(cat "/data/.web/$agent" 2>/dev/null || printf 0) + 1))
+    mkdir -p /data/.web
+    printf '%s\n' "$reset" > "/data/.web/$agent"
+    conversation=$(current)
+}
+
+send() {
+    writable "$conversation" || fail 'This conversation is read-only'
+    text=$(head -c "${CONTENT_LENGTH:-0}" | jq -r '.text // ""')
+    case "${text%% *}" in
+        /help|/start) chat "$help" ;;
+        /new|/reset) fresh; chat ;;
+        /*) chat 'Unknown command. Use /help to see available commands.' ;;
+        *)
+            before=$(version)
+            # Pi records its own errors in the session; only report failures that never reached it.
+            if output=$(printf '%s' "$text" | chat-main "$conversation" "$agent" 2>&1) || [ "$(version)" != "$before" ]; then
+                chat
+            else
+                chat "$agent unreachable: $(printf '%s' "$output" | tail -n 3)"
+            fi ;;
+    esac
+}
+
+files() {
+    for file in agent.json soul.md home/memory.md cron/*.md skills/*/SKILL.md scripts/* \
+        kanban/backlog/*.md kanban/todo/*.md kanban/in-progress/*.md kanban/blocked/*.md kanban/done/*.md; do
+        if [ -f "$agents/$agent/$file" ] && [ ! -L "$agents/$agent/$file" ]; then
+            printf '%s\n' "$file"
+        fi
+    done
+}
+
+show_files() {
+    header
+    printf '<section id="files"><ul>'
+    cd "$agents/$agent"
+    files | while IFS= read -r file; do
+        token=$(printf '%s' "$file" | base64 | tr -d '\n' | tr '+/' '-_')
+        printf '<li><button hx-get="cgi-bin/ui?do=file&amp;a=%s&amp;f=%s" hx-target="#file">%s</button></li>' "$agent" "$token" "$(printf '%s' "$file" | html)"
+    done
+    printf '</ul><pre id="file">Select a file.</pre></section>'
+}
+
+show_file() {
+    cd "$agents/$agent"
+    file=$(param f | tr '_-' '/+' | base64 -d 2>/dev/null) || fail 'Invalid file'
+    # Only files the listing offers may be read, so a crafted token cannot escape the agent folder.
+    files | grep -Fxq -- "$file" || fail 'Unknown file'
+    header
+    html < "$agents/$agent/$file"
+}
+
+action=$(param do)
+if [ "$action" = agents ]; then
+    list_agents
+    exit 0
+fi
+
+agent=$(param a)
+safe "$agent" && [ -f "$agents/$agent/agent.json" ] || fail 'Unknown agent'
+sessions=$agents/$agent/home/.pi/channel-sessions
+conversation=$(param c)
+[ -n "$conversation" ] || conversation=$(current)
+safe "$conversation" || fail 'Invalid conversation'
+
+case "$action" in
+    chat) chat ;;
+    messages)
+        if [ "$(param v)" = "$(version)" ]; then
+            printf 'Status: 204 No Content\r\n\r\n'
+        else
+            header
+            messages
+        fi ;;
+    send) send ;;
+    files) show_files ;;
+    file) show_file ;;
+    *) fail 'Unknown action' ;;
+esac

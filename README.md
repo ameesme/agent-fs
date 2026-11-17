@@ -9,7 +9,7 @@ Simple, filesystem-based orchestration for AI agents.
 - File-based Kanban, persistent workspaces and memory
 - File-based Cron schedules for recurring tasks
 - Git-based version control for agent definitions, skills, schedules and memory
-- Pi's terminal UI and an optional Telegram channel
+- Pi's terminal UI and optional web and Telegram channels
 - Code and poem agents included
 
 ## In a nutshell
@@ -95,6 +95,16 @@ that token instead of `TELEGRAM_BOT_TOKEN`.
 
 Each Telegram chat has its own conversation; `/new` or `/reset` starts a fresh
 one. Speech-to-text is enabled by including an `OPENAI_API_KEY` in your .env.
+
+### Web
+Set `CHANNEL_COMMAND=sh /channels/web.sh`, run `docker compose up -d` and open
+http://localhost:8080. To run Telegram too, use
+`CHANNEL_COMMAND=sh /channels/web.sh sh /channels/telegram.sh`.
+
+Chat with any agent, with `/new`, `/reset` and `/help`. Other channels'
+conversations, such as Telegram, are shown read-only. The files view shows each
+agent's config, soul, memory, cron, skills and Kanban. There is no login, so
+keep the port on localhost.
 
 [MIT](LICENSE).
 
