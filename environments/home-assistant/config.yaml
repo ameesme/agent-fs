@@ -1,5 +1,5 @@
 name: agentFS
-version: "0.1.6"
+version: "0.1.7"
 slug: agent_fs
 description: Filesystem-based orchestration for AI agents
 url: https://github.com/ameesme/agent-fs
@@ -23,6 +23,7 @@ privileged:
   - MKNOD
   - NET_RAW
   - SETFCAP
+  - SYS_PTRACE
 options:
   environment: []
   telegram_bot_token: ""
