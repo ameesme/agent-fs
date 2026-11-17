@@ -8,9 +8,12 @@ case "$conversation$agent" in
     *[!a-zA-Z0-9_-]*) echo 'Invalid conversation or agent id' >&2; exit 1 ;;
 esac
 container=main-chat
+note=
 if [ "$agent" != main ]; then
     container=$agent-chat
-    [ "$(docker inspect -f '{{.State.Running}}' "$container" 2>/dev/null)" = true ] || start-agent "$agent" chat
+    # Worker instructions assume a queued task file, which a chat does not have.
+    note='This is a direct chat with the user, not a queued task: there is no task file, so reply in the chat.'
+    [ "$(docker inspect -f '{{.State.Running}}' "$container" 2>/dev/null)" = true ] || start-agent "$agent" chat >/dev/null
 fi
 
 text=$(cat)
@@ -35,10 +38,10 @@ trap 'exit 130' INT
 trap 'exit 143' TERM
 
 printf '%s' "$text" | docker exec -i \
-    -e "AGENT_FS_CONVERSATION=$conversation" "$container" sh -c '
+    -e "AGENT_FS_CONVERSATION=$conversation" -e "AGENT_FS_NOTE=$note" "$container" sh -c '
         if [ -d /agent/home/.pi/bridge-sessions ] && [ ! -e /agent/home/.pi/channel-sessions ]; then
             mv /agent/home/.pi/bridge-sessions /agent/home/.pi/channel-sessions
         fi
         mkdir -p /agent/home/.pi/channel-sessions
-        exec agent-run --print --session "/agent/home/.pi/channel-sessions/$AGENT_FS_CONVERSATION.jsonl"
+        exec agent-run --print ${AGENT_FS_NOTE:+--append-system-prompt "$AGENT_FS_NOTE"} --session "/agent/home/.pi/channel-sessions/$AGENT_FS_CONVERSATION.jsonl"
     '
