@@ -102,8 +102,10 @@ Each Telegram chat has its own conversation; `/new` or `/reset` starts a fresh
 one. Speech-to-text is enabled by including an `OPENAI_API_KEY` in your .env.
 
 ### Web
-Set `CHANNEL_COMMAND=sh /channels/web.sh`, run `docker compose up -d` and open
-http://localhost:8080. To run Telegram too, use
+Set `CHANNEL_COMMAND=sh /channels/web.sh` and
+`COMPOSE_FILE=compose.yaml:compose.web.yaml` in the root `.env`, run
+`docker compose up -d` and open http://localhost:8080. `WEB_PORT` changes the
+port. To run Telegram too, use
 `CHANNEL_COMMAND=sh /channels/web.sh sh /channels/telegram.sh`.
 
 Chat with any agent, with `/new`, `/reset` and `/help`. Other channels'
