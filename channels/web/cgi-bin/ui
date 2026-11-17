@@ -140,7 +140,7 @@ send() {
     esac
 }
 
-# Confine every path to agent and shared files after resolving symlinks, and never expose .env files.
+# Confine every path to agent and shared files after resolving symlinks.
 resolve() {
     relative=$(decode "$(param p)") || fail 'Invalid path'
     entry=/data/$relative
@@ -151,17 +151,16 @@ resolve() {
         /data/agents|/data/agents/*|/data/shared|/data/shared/*) ;;
         *) fail 'Outside agentFS files' ;;
     esac
-    [ "${path##*/}" != .env ] && [ "${entry##*/}" != .env ] || fail 'Hidden file'
 }
 
 # List a folder as tree items; folders load their children when first opened.
 items() {
     if [ "$1" = /data ]; then set -- /data/agents /data/shared; else set -- "$1"/.* "$1"/*; fi
     stat -L -c '%F	%s	%n' -- "$@" 2>/dev/null | while IFS='	' read -r type size item; do
-        [ "$type" != directory ] || size=$(ls -A "$item" 2>/dev/null | grep -cvx .env || true)
+        [ "$type" != directory ] || size=$(ls -A "$item" 2>/dev/null | wc -l)
         printf '%s\t%s\t%s\n' "$type" "$size" "$item"
     done | jq -Rrn '[inputs | capture("^(?<type>[^\t]*)\t(?<size>[0-9]+)\t(?<path>.*)$")
-        | (.path | split("/") | last) as $name | select($name != "." and $name != ".." and $name != ".env")
+        | (.path | split("/") | last) as $name | select($name != "." and $name != "..")
         | . + {name: $name, rel: (.path | ltrimstr("/data/"))}
         | .token = (.rel | @base64 | gsub("="; "") | gsub("\\+"; "-") | gsub("/"; "_"))]
         | sort_by(.type != "directory") | .[]
@@ -205,7 +204,7 @@ download() {
 new_name() {
     [ -d "$path" ] && [ "$path" != /data ] || fail 'Choose a folder first'
     name=$(decode "$(param n)") || fail 'Invalid name'
-    case "$name" in ''|.|..|.env|*/*) fail 'Invalid name' ;; esac
+    case "$name" in ''|.|..|*/*) fail 'Invalid name' ;; esac
 }
 
 upload() {

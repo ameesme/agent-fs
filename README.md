@@ -106,7 +106,7 @@ http://localhost:8080. To run Telegram too, use
 
 Chat with any agent, with `/new`, `/reset` and `/help`. Other channels'
 conversations, such as Telegram, are shown read-only. Files browses agent and
-shared files, with upload, download and delete; `.env` files stay hidden. There
+shared files, with upload, download and delete, including `.env` files. There
 is no login, so keep the port on localhost.
 
 [MIT](LICENSE).
