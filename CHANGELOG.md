@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.1
+
+### Fixed
+
+- Chats with an agent use its rebuilt image instead of the one their container
+  started with.
+
 ## 0.2.0
 
 First versioned release.
