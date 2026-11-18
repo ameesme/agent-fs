@@ -35,7 +35,8 @@ And its `agent.json`:
 }
 ```
 
-Tailor the role, instructions and tools to the request. `model` is optional.
+Tailor the role, instructions and tools to the request. `model` is optional
+and wins over `PI_MODEL` in `.env`.
 For MCP servers, add `mcpServers` to `agent.json` in the usual format. Refer to
 credentials as `${NAME}` and keep their values in the agent's `.env`. The agent
 reaches their tools through codemode.

@@ -10,6 +10,7 @@ Simple, filesystem-based orchestration for AI agents.
 - File-based Cron schedules for recurring tasks
 - Git-based version control for agent definitions, skills, schedules and memory
 - Pi's terminal UI and optional web and Telegram channels
+- Main reloads itself to apply changes to its own setup, after you confirm
 - Code and poem agents included
 
 ## In a nutshell
@@ -61,7 +62,8 @@ The agent's role and instructions in Markdown; Pi uses it as the system prompt.
 **agent.json**
 
 `agent.json` is agentFS's configuration for Pi. It defines the agent's tools,
-skills, MCP servers and optional model. Add skills under `skills/` as needed.
+skills, MCP servers and optional model, which wins over `PI_MODEL` in `.env`.
+Add skills under `skills/` as needed.
 MCP servers go under `mcpServers`, as in other MCP clients; `${NAME}` takes a
 value from the agent's `.env`.
 

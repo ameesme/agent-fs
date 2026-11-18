@@ -2,6 +2,11 @@
 
 ## 0.3.0
 
+### Breaking changes
+
+- `model` in an agent's `agent.json` now wins over `PI_MODEL` in `.env`.
+  `PI_MODEL` only sets the model for agents without one.
+
 ### Added
 
 - Web chat supports multiline messages (Shift+Enter), shows sent messages
@@ -18,7 +23,8 @@
 
 ### Upgrading
 
-Run `docker compose up -d --build` to rebuild and recreate the runtime.
+Run `docker compose up -d --build` to rebuild and recreate the runtime. If you
+edited main's `agents` skill, merge the new reload section into your copy.
 
 ## 0.2.1
 
