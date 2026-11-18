@@ -11,11 +11,10 @@
 
 - Web chat supports multiline messages (Shift+Enter), shows sent messages
   immediately, and offers a stop button while a reply is running.
-- Main can reload its chat environment, after you confirm it, to apply changes
-  to its instructions, skills and credentials without restarting agentFS. It
-  writes `/data/.control/reload`; the runtime recreates main's chat container
-  once main is idle, at most once a minute, and logs to
-  `/data/.control/reload.log`.
+- Main can restart agentFS, after you confirm it, to apply changes to any
+  agent's instructions, skills and credentials. It writes
+  `/data/.control/restart`; the runtime recreates every agent container once
+  all agents are idle and logs to `/data/.control/restart.log`.
 
 ### Fixed
 
@@ -24,7 +23,7 @@
 ### Upgrading
 
 Run `docker compose up -d --build` to rebuild and recreate the runtime. If you
-edited main's `agents` skill, merge the new reload section into your copy.
+edited main's `agents` skill, merge the new restart section into your copy.
 
 ## 0.2.1
 

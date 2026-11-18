@@ -29,8 +29,8 @@ esac
 # Only one writer may open a saved Pi session at a time.
 mkdir -p /run/agent-fs/locks
 lock=/run/agent-fs/locks/$agent-$conversation
-# Back off while watch-fs recreates main-chat; it waits for these locks in turn.
-until mkdir "$lock" 2>/dev/null && { [ "$agent" != main ] || [ ! -d /run/agent-fs/locks/.reload-main ] || ! rmdir "$lock"; }; do
+# Back off while watch-fs restarts the agents; it waits for these locks in turn.
+until mkdir "$lock" 2>/dev/null && { [ ! -d /run/agent-fs/locks/.restart ] || ! rmdir "$lock"; }; do
     sleep 1
 done
 trap 'rmdir "$lock"' EXIT

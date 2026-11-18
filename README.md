@@ -14,7 +14,7 @@ Crazy simple filesystem-based AI agent orchestration.
 - Pi as harness
 - Automatic git versioning for agent definitions, skills, schedules and memory
 - Terminal UI, and optional web and Telegram channels
-- Main reloads itself to apply changes to its own setup, after you confirm
+- Main restarts agentFS to apply changes to agents, after you confirm
 
 ## In a nutshell
 
@@ -78,7 +78,7 @@ Under `data/shared`, you and agents can share information with each-other that i
 - `skills/`: shared skills; overidden by an agent's own skills if names match
 - Shared files, like artifacts as a result of a task
 
-Main picks up changes to its own or shared credentials and skills after a reload, which it asks you to confirm first. Changes to the root `.env` or channels need `docker compose up -d --build`.
+Running chats pick up changes to credentials and skills after a restart, which main asks you to confirm first. Changes to the root `.env` or agentFS itself need `docker compose up -d --build`.
 
 ### Channels
 

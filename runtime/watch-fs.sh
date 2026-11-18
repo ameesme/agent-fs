@@ -4,10 +4,12 @@
 # back to main, so delegation does not keep a chat request open.
 set -eu
 
-mkdir -p /run/agent-fs/outbox /data/.builds /data/.updates /data/.inbox /data/.control
+# Locks survive a container restart, but the replies holding them do not.
+rm -rf /run/agent-fs/locks
+mkdir -p /run/agent-fs/outbox /run/agent-fs/locks /data/.builds /data/.updates /data/.inbox /data/.control
 docker rm -f main-chat >/dev/null 2>&1 || true
-# Booting starts a fresh main-chat, which already applies any pending reload.
-rm -f /data/.control/reload
+# Booting already starts fresh containers, which applies any pending restart.
+rm -f /data/.control/restart
 
 # Optional channels are separate commands, passed through by Compose.
 if [ "$#" -gt 0 ]; then
@@ -20,41 +22,37 @@ running() {
     [ "$(docker inspect -f '{{.State.Running}}' "$1" 2>/dev/null)" = true ]
 }
 
-# Main asks for a reload, after the user confirms it, by writing /data/.control/reload.
-# Recreating main-chat applies its .env, soul, agent.json and skill mounts. Wait until
-# main is idle so the reply that wrote the request and any open TUI are not cut off.
-reload_interval=60
-reload_main() {
-    request=/data/.control/reload
+# Main writes this after the user confirms; new containers give every chat the changed config.
+restart_agents() {
+    request=/data/.control/restart
     [ -f "$request" ] || return 0
     if ! grep -qx 'confirmed_by: user' "$request"; then
-        printf '%s rejected: request lacks the user confirmation\n' "$(date -u +%FT%TZ)" >> /data/.control/reload.log
+        printf '%s rejected: request lacks the user confirmation\n' "$(date -u +%FT%TZ)" >> /data/.control/restart.log
         rm -f "$request"
         return 0
     fi
-    last=$(cat /run/agent-fs/reloaded-at 2>/dev/null || echo 0)
-    [ $(($(date +%s) - last)) -ge "$reload_interval" ] || return 0
-
-    # chat-main backs off while this lock exists, and the lock waits for chat-main.
-    lock=/run/agent-fs/locks/.reload-main
-    mkdir -p /run/agent-fs/locks
+    # chat-main waits while this lock exists, so no reply starts during the check.
+    lock=/run/agent-fs/locks/.restart
     mkdir "$lock" 2>/dev/null || return 0
-    for busy in /run/agent-fs/locks/main-*; do
-        [ ! -e "$busy" ] || { rmdir "$lock"; return 0; }
-    done
-    # The native TUI runs Pi without a lock. Exit 3 means a run is still open.
-    status=0
-    docker exec main-chat sh -c 'for process in /proc/[0-9]*; do
-            tr "\0" " " < "$process/cmdline" 2>/dev/null | grep -q "[a]gent-run" && exit 3
-        done; exit 0' >/dev/null 2>&1 || status=$?
-    [ "$status" != 3 ] || { rmdir "$lock"; return 0; }
-
-    reason=$(sed -n 's/^reason: //p' "$request" | head -n 1)
-    rm -f "$request"
-    if start-agent main >/dev/null; then result=reloaded; else result=failed; fi
-    date +%s > /run/agent-fs/reloaded-at
+    if idle; then
+        reason=$(sed -n 's/^reason: //p' "$request" | head -n 1)
+        rm -f "$request"
+        docker ps -aq | xargs -r docker rm -f >/dev/null
+        if start-agent main >/dev/null; then result=restarted; else result=failed; fi
+        printf '%s %s: %s\n' "$(date -u +%FT%TZ)" "$result" "${reason:-no reason given}" | tee -a /data/.control/restart.log
+    fi
     rmdir "$lock"
-    printf '%s %s main-chat: %s\n' "$(date -u +%FT%TZ)" "$result" "${reason:-no reason given}" | tee -a /data/.control/reload.log
+}
+
+# Idle means no chat reply, task container or native TUI session is running.
+idle() {
+    for busy in /run/agent-fs/locks/*; do
+        [ ! -e "$busy" ] || return 1
+    done
+    [ -z "$(docker ps -q --filter name=^agent-)" ] || return 1
+    ! docker exec main-chat sh -c 'for process in /proc/[0-9]*; do
+            tr "\0" " " < "$process/cmdline" 2>/dev/null | grep -q "[a]gent-run" && exit 0
+        done; exit 1' >/dev/null 2>&1
 }
 
 notify_update() {
@@ -208,7 +206,6 @@ while :; do
         fi
 
         if [ "$name" = main ]; then
-            reload_main
             if ! running main-chat; then
                 start-agent main || true
             fi
@@ -224,5 +221,7 @@ while :; do
             break
         done
     done
+    # After this pass's builds, so restarted containers use the rebuilt images.
+    restart_agents
     sleep 2
 done
