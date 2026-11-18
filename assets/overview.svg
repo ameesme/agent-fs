@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 440" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0L10 5L0 10z" fill="#57606a"/>
+    </marker>
+    <marker id="g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0L10 5L0 10z" fill="#1a7f37"/>
+    </marker>
+  </defs>
+  <style>
+    .t{font-size:15px;font-weight:600;fill:#1f2328}
+    .s{font-size:12.5px;fill:#57606a}
+    .m{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;fill:#1f2328}
+    .k{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;fill:#57606a}
+    .l{font-size:12px;fill:#57606a}
+    .box{fill:#f6f8fa;stroke:#d0d7de;stroke-width:1.5}
+  </style>
+
+  <rect width="960" height="440" rx="16" fill="#ffffff"/>
+
+  <text x="40" y="44" class="t" font-size="18">agentFS</text>
+  <text x="112" y="44" class="s">one folder per agent, tasks are Markdown files</text>
+
+  <rect x="40" y="90" width="160" height="150" rx="10" class="box"/>
+  <text x="120" y="118" class="t" text-anchor="middle">You</text>
+  <text x="120" y="150" class="s" text-anchor="middle">Terminal (Pi)</text>
+  <text x="120" y="172" class="s" text-anchor="middle">Web</text>
+  <text x="120" y="194" class="s" text-anchor="middle">Telegram</text>
+  <text x="120" y="222" class="k" text-anchor="middle">channels/</text>
+
+  <rect x="260" y="90" width="170" height="150" rx="10" fill="#ddf4ff" stroke="#54aeff" stroke-width="1.5"/>
+  <text x="345" y="118" class="t" text-anchor="middle">main</text>
+  <text x="345" y="146" class="s" text-anchor="middle">chats with you</text>
+  <text x="345" y="166" class="s" text-anchor="middle">delegates by writing</text>
+  <text x="345" y="186" class="s" text-anchor="middle">task files</text>
+  <text x="345" y="222" class="k" text-anchor="middle">container</text>
+
+  <line x1="202" y1="150" x2="256" y2="150" stroke="#57606a" stroke-width="1.5" marker-end="url(#a)" marker-start="url(#a)"/>
+
+  <rect x="490" y="70" width="250" height="300" rx="10" class="box"/>
+  <text x="508" y="98" class="m" font-weight="600">data/agents/poem/</text>
+  <text x="524" y="124" class="m">soul.md</text>
+  <text x="524" y="146" class="m">agent.json</text>
+  <text x="524" y="168" class="m">Dockerfile</text>
+  <text x="524" y="190" class="m">skills/</text>
+  <text x="524" y="212" class="m">cron/</text>
+  <text x="524" y="234" class="m">home/</text>
+  <text x="524" y="256" class="m">kanban/</text>
+  <text x="544" y="278" class="m">todo/</text>
+  <text x="544" y="300" class="m">in-progress/</text>
+  <text x="544" y="322" class="m">done/</text>
+  <text x="544" y="344" class="m">blocked/</text>
+  <text x="614" y="124" class="l">instructions</text>
+  <text x="614" y="146" class="l">tools, MCP, model</text>
+  <text x="614" y="168" class="l">own image</text>
+  <text x="614" y="212" class="l">schedules</text>
+  <text x="614" y="234" class="l">workspace, memory</text>
+  <rect x="538" y="264" width="186" height="20" rx="4" fill="#fff8c5" stroke="#d4a72c"/>
+  <text x="544" y="278" class="m">todo/</text>
+  <text x="590" y="278" class="k">write-poem.md</text>
+  <rect x="538" y="308" width="186" height="20" rx="4" fill="#dafbe1" stroke="#4ac26b"/>
+  <text x="544" y="322" class="m">done/</text>
+
+  <path d="M430 175 C 470 175, 480 274, 534 274" fill="none" stroke="#57606a" stroke-width="1.5" marker-end="url(#a)"/>
+  <text x="385" y="262" class="l">1. new task</text>
+
+  <rect x="800" y="236" width="130" height="110" rx="10" fill="#fbefff" stroke="#c297ff" stroke-width="1.5"/>
+  <text x="865" y="266" class="t" text-anchor="middle">poem</text>
+  <text x="865" y="292" class="s" text-anchor="middle">container starts</text>
+  <text x="865" y="312" class="s" text-anchor="middle">when work arrives</text>
+  <text x="865" y="334" class="k" text-anchor="middle">isolated</text>
+
+  <path d="M732 274 L 796 274" fill="none" stroke="#57606a" stroke-width="1.5" marker-end="url(#a)"/>
+  <text x="742" y="264" class="l">2. picks up</text>
+  <path d="M796 318 L 732 318" fill="none" stroke="#57606a" stroke-width="1.5" marker-end="url(#a)"/>
+  <text x="746" y="336" class="l">3. moves</text>
+
+  <path d="M536 318 C 400 340, 345 300, 345 244" fill="none" stroke="#1a7f37" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#g)"/>
+  <text x="250" y="362" class="l" fill="#1a7f37">4. main is notified, reports back</text>
+
+  <text x="40" y="410" class="s">Everything is plain files under data/, versioned with git. Add an agent by adding a folder.</text>
+</svg>

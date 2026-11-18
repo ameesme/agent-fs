@@ -1,27 +1,34 @@
 # agentFS
 
-Simple, filesystem-based orchestration for AI agents.
+Crazy simple filesystem-based AI agent orchestration.
 
 **Includes**
 
 - A main chat-agent that delegates work and reports back results
-- Separate Docker containers, tools, skills and instructions for each agent
-- File-based Kanban, persistent workspaces and memory
-- File-based Cron schedules for recurring tasks
-- Git-based version control for agent definitions, skills, schedules and memory
-- Pi's terminal UI and optional web and Telegram channels
+- An isolated Docker container and image per agent with a filesystem for
+  - Kanban
+  - Memory
+  - Cron
+  - Instructions like Soul.md and skills
+  - Persistent workspace
+- Pi as harness
+- Automatic git versioning for agent definitions, skills, schedules and memory
+- Terminal UI, and optional web and Telegram channels
 - Main reloads itself to apply changes to its own setup, after you confirm
-- Code and poem agents included
 
 ## In a nutshell
 
-Each agent is a folder with its own instructions, tools and Docker image.
-Tasks are Markdown files in that agent's `kanban/` folder. Moving a task between
-`todo`, `in-progress`, `done` and `blocked` changes the task's status.
+![How agentFS works: main writes a task file, the agent container picks it up, main reports back](/assets/overview.svg)
 
-`main` stays available for chat and delegates work by creating task files.
-agentFS starts agent containers as tasks arrive. When a task finishes or gets
-blocked, `main` is notified and reports back to you.
+Each agent is a folder with its own instructions, tools and Docker image, where you can define it's skills, soul and tools (by adding them to the Dockerfile). You can chat to each agent, but `main` can easily create and delegate tasks.
+
+Tasks are Markdown files in that agent's `kanban/` folder. Moving a task between `todo`, `in-progress`, `done` and `blocked` changes the task's status.
+
+agentFS starts agent containers automatically as tasks arrive. When a task finishes or gets blocked, `main` is notified and reports back to you.
+
+### Get started in 1 minute
+![1-minute demo showcasing agent delegation](/assets/demo.gif)
+From git-clone to agent-delegation in under a minute. 
 
 ## Getting started
 
@@ -32,28 +39,15 @@ blocked, `main` is notified and reports back to you.
 - Run `docker compose up -d --build`
 - Run `docker compose exec agents chat` to open Pi's native CLI
 
-### The main agent
-
-By default, a `main` agent is included, which is responsible for coordinating
-tasks and reporting the results back to you in a chat.
-
 ### Demo
 
-As an example, `poem` is included as an agent by default too. As its name
-suggests, it writes poems, including a cron-based daily poem.
+`poem` is included as an agent by default. As its name suggests, it writes poems, including a cron-based daily poem.
 
-Ask main: `Have poem write a short poem about a quiet morning.` Main dispatches
-the task and reports back when it finishes. You can keep chatting while poem
-works.
-
-Use Pi's `/help` for commands. Resume with
-`docker compose exec agents chat --continue`, or choose a session with
-`--resume`.
+Ask main: `Have poem write a short poem about a quiet morning.` Main will dispatch the task and reports back when it finishes. You can keep chatting while poem works.
 
 ## Adding other agents
 
-Ask `main` to create an agent, or add a folder under `data/agents/` yourself.
-An agent needs `soul.md`, `agent.json` and a `Dockerfile`. Everything else is optional.
+Ask `main` to create an agent, or add a folder under `data/agents/` yourself. An agent needs;
 
 **soul.md**
 
@@ -61,64 +55,62 @@ The agent's role and instructions in Markdown; Pi uses it as the system prompt.
 
 **agent.json**
 
-`agent.json` is agentFS's configuration for Pi. It defines the agent's tools,
-skills, MCP servers and optional model, which wins over `PI_MODEL` in `.env`.
-Add skills under `skills/` as needed.
+`agent.json` is the configuration for Pi, defining the agent's tools, skills, MCP servers and optional model (which wins over `PI_MODEL` in `.env`). Add skills under `skills/` as needed.
+
 MCP servers go under `mcpServers`, as in other MCP clients; `${NAME}` takes a
 value from the agent's `.env`.
 
 **Dockerfile**
 
-Use `FROM agent-base` for Pi, Python and the task runtime. Add any other
-software your agent needs, for example, the included code agent adds Claude Code, tmux and
-Chromium.
+Use `FROM agent-base` for Pi, Python and the task runtime. Add any other software your agent needs, for example, the included code agent adds Claude Code, tmux and Chromium.
 
-agentFS creates workspace, memory and task folders, and builds the agent's
-image. It rebuilds the image when its Dockerfile or the base image definition changes.
+When you start agentFS, it creates each agent's workspace, memory and task folders, and builds the agent's image. It rebuilds the image when its Dockerfile or the base image definition changes.
 
-## Cron
+## Other features
+### Cron
 
 Define recurring tasks as Markdown files in each worker's `cron/` folder. Ask
 `main` to set up a schedule, or copy [poem's example][daily-poem].
 
-## Shared
+### Shared data
+Under `data/shared`, you and agents can share information with each-other that is not a task. For example;
+- `.env`: shared credentials; overidden by an agent's own `.env`
+- `skills/`: shared skills; overidden by an agent's own skills if names match
+- Shared files, like artifacts as a result of a task
 
-- `data/shared/.env`: shared credentials; an agent's own `.env` overrides them
-- `data/shared/skills/`: common skills; an agent's own skills override matching
-  names
-- Shared files also live here and stay ignored by Git
-- Main picks up changes to its own or shared credentials and skills after a
-  reload. Main asks before requesting one and reloads once idle, after the
-  current reply; close the terminal chat first if it is open. Changes to the
-  root `.env` or channels still need `docker compose up -d --build`
+Main picks up changes to its own or shared credentials and skills after a reload, which it asks you to confirm first. Changes to the root `.env` or channels need `docker compose up -d --build`.
 
-## Channels
+### Channels
 
-The default way to interact with `main` is through Pi's terminal UI. However, by
-setting a custom `CHANNEL_COMMAND`, you can enable other ways.
+The default way to interact with `main` is through Pi's terminal UI. However, by setting a custom `CHANNEL_COMMAND`, you can enable other ways.
 
 ### Telegram
-For Telegram, set `CHANNEL_COMMAND=sh /channels/telegram.sh`, `TELEGRAM_BOT_TOKEN`
-and `TELEGRAM_CHAT_IDS` in the root `.env`, then run `docker compose up -d`.
-If you have a dedicated chat bot, set `TELEGRAM_CHAT_BOT_TOKEN`; the channel uses
-that token instead of `TELEGRAM_BOT_TOKEN`.
+To enable Telegram, update the root `.env` by setting
+- `CHANNEL_COMMAND=sh /channels/telegram.sh`
+- `TELEGRAM_BOT_TOKEN` or `TELEGRAM_CHAT_BOT_TOKEN`
+- `TELEGRAM_CHAT_IDS`
 
-Each Telegram chat has its own conversation; `/new` or `/reset` starts a fresh
-one. Speech-to-text is enabled by including an `OPENAI_API_KEY` in your .env.
+and running `docker compose up -d`.
+
+You can only chat with `main` directly in Telegram. Use `/new` or `/reset` starts a fresh session. **Speech-to-text** is enabled by including an `OPENAI_API_KEY` in your .env.
 
 ### Web
-Set `CHANNEL_COMMAND=sh /channels/web.sh` and
-`COMPOSE_FILE=compose.yaml:compose.web.yaml` in the root `.env`, run
-`docker compose up -d` and open http://localhost:8080. `WEB_PORT` changes the
-port. To run Telegram too, use
-`CHANNEL_COMMAND=sh /channels/web.sh sh /channels/telegram.sh`.
+To enable agentFS's basic htmx web-interface, update the root `.env` setting
+- `CHANNEL_COMMAND=sh /channels/web.sh`
+- `COMPOSE_FILE=compose.yaml:compose.web.yaml`
 
-Chat with any agent, with `/new`, `/reset` and `/help`. Other channels'
-conversations, such as Telegram, are shown read-only. Files browses agent and
-shared files, with upload, download and delete, including `.env` files. There
-is no login, so keep the port on localhost.
+and running `docker compose up -d`. You can now open http://localhost:8080. 
 
-[MIT](LICENSE).
+![web demo showcasing agent delegation](/assets/demo-web.gif)
+
+To change the port, you can set `WEB_PORT`. To combine with Telegram, just concatenate its channel command:
+
+`CHANNEL_COMMAND=sh /channels/web.sh sh /channels/telegram.sh`
+
+In the web-interface, you can chat with any agent. Other channels' conversations, such as Telegram, are shown read-only. Files browses agent and shared files, with upload, download and delete, including `.env` files.
+
+## License
+Licensed under [MIT](LICENSE)
 
 [llm]: https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/providers.md
 [daily-poem]: data/agents/poem/cron/daily-poem.md
