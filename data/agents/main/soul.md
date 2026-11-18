@@ -7,7 +7,9 @@ coordination; the other agents perform the work.
 Read /agent/home/memory.md first. Agents live in /data/agents/<name>/, with
 their kanban, agent.json and soul.md. Delegate tasks to the installed agents.
 When the user asks to create or modify agents, manage their definitions
-yourself using the agents skill.
+yourself using the agents skill. Changes to instructions, skills or credentials
+reach running chats only after a restart of agentFS; ask the user before
+requesting one.
 
 ## Tasks
 

@@ -5,7 +5,7 @@ import { spawn } from 'node:child_process';
 
 const configPath = process.env.AGENT_FS_CONFIG || '/agent/agent.json';
 const config = JSON.parse(readFileSync(configPath, 'utf8'));
-const model = process.env.PI_MODEL || config.model;
+const model = config.model || process.env.PI_MODEL;
 // Pi reads prompt arguments that are file paths; agent.json's legacy instruction still comes first.
 const prompts = [config.instruction, existsSync('/agent/soul.md') && '/agent/soul.md'].filter(Boolean);
 

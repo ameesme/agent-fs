@@ -13,9 +13,6 @@ if [ "$agent" != main ]; then
     # Worker instructions assume a queued task file, which a chat does not have.
     note='This is a direct chat with the user, not a queued task: there is no task file, so reply in the chat.'
 fi
-# A rebuilt image only reaches a chat through a new container.
-[ "$(docker inspect -f '{{.State.Running}} {{.Image}}' "$container" 2>/dev/null)" = "true $(docker image inspect -f '{{.Id}}' "agent-$agent")" ] || start-agent "$agent" chat >/dev/null
-
 text=$(cat)
 case "$conversation" in
     native-*)
@@ -32,10 +29,16 @@ esac
 # Only one writer may open a saved Pi session at a time.
 mkdir -p /run/agent-fs/locks
 lock=/run/agent-fs/locks/$agent-$conversation
-until mkdir "$lock" 2>/dev/null; do sleep 1; done
+# Back off while watch-fs restarts the agents; it waits for these locks in turn.
+until mkdir "$lock" 2>/dev/null && { [ ! -d /run/agent-fs/locks/.restart ] || ! rmdir "$lock"; }; do
+    sleep 1
+done
 trap 'rmdir "$lock"' EXIT
 trap 'exit 130' INT
 trap 'exit 143' TERM
+
+# A rebuilt image only reaches a chat through a new container.
+[ "$(docker inspect -f '{{.State.Running}} {{.Image}}' "$container" 2>/dev/null)" = "true $(docker image inspect -f '{{.Id}}' "agent-$agent")" ] || start-agent "$agent" chat >/dev/null
 
 printf '%s' "$text" | docker exec -i \
     -e "AGENT_FS_CONVERSATION=$conversation" -e "AGENT_FS_NOTE=$note" "$container" sh -c '

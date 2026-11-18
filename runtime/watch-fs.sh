@@ -4,8 +4,12 @@
 # back to main, so delegation does not keep a chat request open.
 set -eu
 
-mkdir -p /run/agent-fs/outbox /data/.builds /data/.updates /data/.inbox
+# Locks survive a container restart, but the replies holding them do not.
+rm -rf /run/agent-fs/locks
+mkdir -p /run/agent-fs/outbox /run/agent-fs/locks /data/.builds /data/.updates /data/.inbox /data/.control
 docker rm -f main-chat >/dev/null 2>&1 || true
+# Booting already starts fresh containers, which applies any pending restart.
+rm -f /data/.control/restart
 
 # Optional channels are separate commands, passed through by Compose.
 if [ "$#" -gt 0 ]; then
@@ -16,6 +20,39 @@ base_hash=$(find /agent-base -type f -exec sha256sum {} \; | sort | sha256sum | 
 
 running() {
     [ "$(docker inspect -f '{{.State.Running}}' "$1" 2>/dev/null)" = true ]
+}
+
+# Main writes this after the user confirms; new containers give every chat the changed config.
+restart_agents() {
+    request=/data/.control/restart
+    [ -f "$request" ] || return 0
+    if ! grep -qx 'confirmed_by: user' "$request"; then
+        printf '%s rejected: request lacks the user confirmation\n' "$(date -u +%FT%TZ)" >> /data/.control/restart.log
+        rm -f "$request"
+        return 0
+    fi
+    # chat-main waits while this lock exists, so no reply starts during the check.
+    lock=/run/agent-fs/locks/.restart
+    mkdir "$lock" 2>/dev/null || return 0
+    if idle; then
+        reason=$(sed -n 's/^reason: //p' "$request" | head -n 1)
+        rm -f "$request"
+        docker ps -aq | xargs -r docker rm -f >/dev/null
+        if start-agent main >/dev/null; then result=restarted; else result=failed; fi
+        printf '%s %s: %s\n' "$(date -u +%FT%TZ)" "$result" "${reason:-no reason given}" | tee -a /data/.control/restart.log
+    fi
+    rmdir "$lock"
+}
+
+# Idle means no chat reply, task container or native TUI session is running.
+idle() {
+    for busy in /run/agent-fs/locks/*; do
+        [ ! -e "$busy" ] || return 1
+    done
+    [ -z "$(docker ps -q --filter name=^agent-)" ] || return 1
+    ! docker exec main-chat sh -c 'for process in /proc/[0-9]*; do
+            tr "\0" " " < "$process/cmdline" 2>/dev/null | grep -q "[a]gent-run" && exit 0
+        done; exit 1' >/dev/null 2>&1
 }
 
 notify_update() {
@@ -184,5 +221,7 @@ while :; do
             break
         done
     done
+    # After this pass's builds, so restarted containers use the rebuilt images.
+    restart_agents
     sleep 2
 done

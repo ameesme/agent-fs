@@ -1,5 +1,30 @@
 # Changelog
 
+## 0.3.0
+
+### Breaking changes
+
+- `model` in an agent's `agent.json` now wins over `PI_MODEL` in `.env`.
+  `PI_MODEL` only sets the model for agents without one.
+
+### Added
+
+- Web chat supports multiline messages (Shift+Enter), shows sent messages
+  immediately, and offers a stop button while a reply is running.
+- Main can restart agentFS, after you confirm it, to apply changes to any
+  agent's instructions, skills and credentials. It writes
+  `/data/.control/restart`; the runtime recreates every agent container once
+  all agents are idle and logs to `/data/.control/restart.log`.
+
+### Fixed
+
+- Web chat polling skips updates while text in the conversation is selected.
+
+### Upgrading
+
+Run `docker compose up -d --build` to rebuild and recreate the runtime. If you
+edited main's `agents` skill, merge the new restart section into your copy.
+
 ## 0.2.1
 
 ### Fixed
