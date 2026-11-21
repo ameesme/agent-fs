@@ -1,4 +1,4 @@
-# agentFS
+# shoebox
 
 Crazy simple filesystem-based AI agent orchestration.
 
@@ -14,17 +14,17 @@ Crazy simple filesystem-based AI agent orchestration.
 - Pi as harness
 - Automatic git versioning for agent definitions, skills, schedules and memory
 - Terminal UI, and optional web and Telegram channels
-- Main restarts agentFS to apply changes to agents, after you confirm
+- Main restarts shoebox to apply changes to agents, after you confirm
 
 ## In a nutshell
 
-![How agentFS works: main writes a task file, the agent container picks it up, main reports back](/assets/overview.svg)
+![How shoebox works: main writes a task file, the agent container picks it up, main reports back](/assets/overview.svg)
 
 Each agent is a folder with its own instructions, tools and Docker image, where you can define it's skills, soul and tools (by adding them to the Dockerfile). You can chat to each agent, but `main` can easily create and delegate tasks.
 
 Tasks are Markdown files in that agent's `kanban/` folder. Moving a task between `todo`, `in-progress`, `done` and `blocked` changes the task's status.
 
-agentFS starts agent containers automatically as tasks arrive. When a task finishes or gets blocked, `main` is notified and reports back to you.
+shoebox starts agent containers automatically as tasks arrive. When a task finishes or gets blocked, `main` is notified and reports back to you.
 
 ### Get started in 1 minute
 ![1-minute demo showcasing agent delegation](/assets/demo.gif)
@@ -64,7 +64,7 @@ value from the agent's `.env`.
 
 Use `FROM agent-base` for Pi, Python and the task runtime. Add any other software your agent needs, for example, the included code agent can add Claude Code, tmux and Chromium by uncommenting them.
 
-When you start agentFS, it creates each agent's workspace, memory and task folders, and builds the agent's image. It rebuilds the image when its Dockerfile or the base image definition changes.
+When you start shoebox, it creates each agent's workspace, memory and task folders, and builds the agent's image. It rebuilds the image when its Dockerfile or the base image definition changes.
 
 ## Other features
 ### Cron
@@ -78,7 +78,7 @@ Under `data/shared`, you and agents can share information with each-other that i
 - `skills/`: shared skills; overidden by an agent's own skills if names match
 - Shared files, like artifacts as a result of a task
 
-Running chats pick up changes to credentials and skills after a restart, which main asks you to confirm first. Changes to the root `.env` or agentFS itself need `docker compose up -d --build`.
+Running chats pick up changes to credentials and skills after a restart, which main asks you to confirm first. Changes to the root `.env` or shoebox itself need `docker compose up -d --build`.
 
 ### Channels
 
@@ -95,7 +95,7 @@ and running `docker compose up -d`.
 You can only chat with `main` directly in Telegram. Use `/new` or `/reset` starts a fresh session. **Speech-to-text** is enabled by including an `OPENAI_API_KEY` in your .env.
 
 ### Web
-To enable agentFS's basic htmx web-interface, update the root `.env` setting
+To enable shoebox's basic htmx web-interface, update the root `.env` setting
 - `CHANNEL_COMMAND=sh /channels/web.sh`
 - `COMPOSE_FILE=compose.yaml:compose.web.yaml`
 
@@ -111,9 +111,9 @@ In the web-interface, you can chat with any agent. Other channels' conversations
 
 ## Compared to others
 
-agentFS does a lot with very little code. Docker, git and Pi do the heavy lifting, so there's no database, gateway or agent loop to maintain. That's about 1.4k lines, idling at under 100 MB. If you want an assistant in every chat app, look at [OpenClaw][openclaw] or [Hermes Agent][hermes]. For a full workspace with email, documents and local models, look at [Odysseus][odysseus].
+shoebox does a lot with very little code. Docker, git and Pi do the heavy lifting, so there's no database, gateway or agent loop to maintain. That's about 1.4k lines, idling at under 100 MB. If you want an assistant in every chat app, look at [OpenClaw][openclaw] or [Hermes Agent][hermes]. For a full workspace with email, documents and local models, look at [Odysseus][odysseus].
 
-| | agentFS | OpenClaw | Hermes Agent | Odysseus |
+| | shoebox | OpenClaw | Hermes Agent | Odysseus |
 |---|---|---|---|---|
 | Lines of code¹ | ~1.4k | ~5.4M | ~1.6M | ~550k |
 | Idle memory² | 80 MB (150 MB with web) | 970 MB | 450 MB | 1.9 GB |
@@ -131,7 +131,7 @@ agentFS does a lot with very little code. Docker, git and Pi do the heavy liftin
 
 — means not built in or not documented, as of November 2026.
 
-¹ Non-blank source lines from each repo, without tests, generated code or dependencies. agentFS builds on Pi, which isn't counted.<br>
+¹ Non-blank source lines from each repo, without tests, generated code or dependencies. shoebox builds on Pi, which isn't counted.<br>
 ² Each project's default Docker setup, with no channels or models configured, after 3 minutes idle on Docker Desktop (arm64). Memory is from `docker stats`, disk is the images it pulls or builds.
 
 ## License

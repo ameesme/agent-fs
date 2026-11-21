@@ -18,7 +18,7 @@
 
   <rect width="960" height="440" rx="16" fill="#ffffff"/>
 
-  <text x="40" y="44" class="t" font-size="18">agentFS</text>
+  <text x="40" y="44" class="t" font-size="18">shoebox</text>
   <text x="112" y="44" class="s">one folder per agent, tasks are Markdown files</text>
 
   <rect x="40" y="90" width="160" height="150" rx="10" class="box"/>

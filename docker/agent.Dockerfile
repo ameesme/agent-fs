@@ -14,7 +14,7 @@ RUN npm install --global --ignore-scripts "@earendil-works/pi-coding-agent@${PI_
 COPY process-tasks.sh /usr/local/bin/process-tasks
 COPY create-task.sh /usr/local/bin/create-task
 COPY pi/agent-run.mjs /usr/local/bin/agent-run
-COPY pi/agentFS.mjs /usr/local/lib/agent-fs/agentFS.mjs
+COPY pi/shoebox.mjs /usr/local/lib/shoebox/shoebox.mjs
 RUN chmod +x /usr/local/bin/process-tasks /usr/local/bin/create-task /usr/local/bin/agent-run
 
 ENV HOME=/agent/home \

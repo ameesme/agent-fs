@@ -14,7 +14,7 @@ COPY docker/agent.Dockerfile /agent-base/Dockerfile
 COPY runtime/process-tasks.sh runtime/create-task.sh /agent-base/
 COPY runtime/pi /agent-base/pi
 COPY runtime/create-task.sh /usr/local/bin/create-task
-COPY docker/data.gitignore /etc/agent-fs.gitignore
+COPY docker/data.gitignore /etc/shoebox.gitignore
 RUN chmod +x /usr/local/bin/boot.sh /usr/local/bin/watch-fs /usr/local/bin/start-agent /usr/local/bin/cron-tasks /usr/local/bin/create-task /usr/local/bin/chat-main /usr/local/bin/chat
 
 ENTRYPOINT ["boot.sh"]

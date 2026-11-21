@@ -27,10 +27,10 @@ case "$conversation" in
 esac
 
 # Only one writer may open a saved Pi session at a time.
-mkdir -p /run/agent-fs/locks
-lock=/run/agent-fs/locks/$agent-$conversation
+mkdir -p /run/shoebox/locks
+lock=/run/shoebox/locks/$agent-$conversation
 # Back off while watch-fs restarts the agents; it waits for these locks in turn.
-until mkdir "$lock" 2>/dev/null && { [ ! -d /run/agent-fs/locks/.restart ] || ! rmdir "$lock"; }; do
+until mkdir "$lock" 2>/dev/null && { [ ! -d /run/shoebox/locks/.restart ] || ! rmdir "$lock"; }; do
     sleep 1
 done
 trap 'rmdir "$lock"' EXIT
@@ -41,10 +41,10 @@ trap 'exit 143' TERM
 [ "$(docker inspect -f '{{.State.Running}} {{.Image}}' "$container" 2>/dev/null)" = "true $(docker image inspect -f '{{.Id}}' "agent-$agent")" ] || start-agent "$agent" chat >/dev/null
 
 printf '%s' "$text" | docker exec -i \
-    -e "AGENT_FS_CONVERSATION=$conversation" -e "AGENT_FS_NOTE=$note" "$container" sh -c '
+    -e "SHOEBOX_CONVERSATION=$conversation" -e "SHOEBOX_NOTE=$note" "$container" sh -c '
         if [ -d /agent/home/.pi/bridge-sessions ] && [ ! -e /agent/home/.pi/channel-sessions ]; then
             mv /agent/home/.pi/bridge-sessions /agent/home/.pi/channel-sessions
         fi
         mkdir -p /agent/home/.pi/channel-sessions
-        exec agent-run --print ${AGENT_FS_NOTE:+--append-system-prompt "$AGENT_FS_NOTE"} --session "/agent/home/.pi/channel-sessions/$AGENT_FS_CONVERSATION.jsonl"
+        exec agent-run --print ${SHOEBOX_NOTE:+--append-system-prompt "$SHOEBOX_NOTE"} --session "/agent/home/.pi/channel-sessions/$SHOEBOX_CONVERSATION.jsonl"
     '

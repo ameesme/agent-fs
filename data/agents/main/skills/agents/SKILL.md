@@ -66,7 +66,7 @@ Chats keep their container: changes to an agent's `soul.md`, `agent.json`,
 after a restart. Don't interrupt running work to apply changes, and don't imply
 the changes are already active.
 
-### Restarting agentFS
+### Restarting shoebox
 
 A restart recreates every agent container once all agents are idle: no reply,
 task or open terminal chat is running. Ask the user before restarting, say
@@ -84,7 +84,7 @@ user it applies after this reply once every agent is idle, and that a terminal
 chat must be closed and reopened with `docker compose exec agents chat --continue`.
 Results are logged in `/data/.control/restart.log`.
 
-Changes to the root `.env` or agentFS itself need `docker compose up -d --build`,
+Changes to the root `.env` or shoebox itself need `docker compose up -d --build`,
 which you cannot do. Tell the user why and provide it as the next step.
 
 Check that `agent.json` parses and each declared skill exists locally or in

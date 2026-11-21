@@ -3,19 +3,19 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { spawn } from 'node:child_process';
 
-const configPath = process.env.AGENT_FS_CONFIG || '/agent/agent.json';
+const configPath = process.env.SHOEBOX_CONFIG || '/agent/agent.json';
 const config = JSON.parse(readFileSync(configPath, 'utf8'));
 const model = config.model || process.env.PI_MODEL;
 // Pi reads prompt arguments that are file paths; agent.json's legacy instruction still comes first.
 const prompts = [config.instruction, existsSync('/agent/soul.md') && '/agent/soul.md'].filter(Boolean);
 
-// Load only the resources declared by agentFS, rather than discovering them.
+// Load only the resources declared by shoebox, rather than discovering them.
 const piArguments = [
   '--no-extensions',
   '--no-context-files',
   '--no-prompt-templates',
   '--no-skills',
-  '--extension', '/usr/local/lib/agent-fs/agentFS.mjs',
+  '--extension', '/usr/local/lib/shoebox/shoebox.mjs',
   '--system-prompt', prompts[0] ?? '',
   '--tools', [...config.tools, ...(config.mcpServers ? ['codemode'] : [])].join(','),
 ];
