@@ -109,8 +109,36 @@ To change the port, you can set `WEB_PORT`. To combine with Telegram, just conca
 
 In the web-interface, you can chat with any agent. Other channels' conversations, such as Telegram, are shown read-only. Files browses agent and shared files, with upload, download and delete, including `.env` files.
 
+## Compared to others
+
+agentFS does a lot with very little code. Docker, git and Pi do the heavy lifting, so there's no database, gateway or agent loop to maintain. That's about 1.4k lines, idling at under 100 MB. If you want an assistant in every chat app, look at [OpenClaw][openclaw] or [Hermes Agent][hermes]. For a full workspace with email, documents and local models, look at [Odysseus][odysseus].
+
+| | agentFS | OpenClaw | Hermes Agent | Odysseus |
+|---|---|---|---|---|
+| Lines of code¹ | ~1.4k | ~5.4M | ~1.6M | ~550k |
+| Idle memory² | 80 MB (150 MB with web) | 970 MB | 450 MB | 1.9 GB |
+| Disk² | 1.1 GB | 2.7 GB | 4.4 GB | 4.9 GB |
+| Focus | Delegating to a team of agents | Personal assistant in your chat apps | Self-improving personal agent | All-in-one AI workspace |
+| Multiple agents | `main` delegates to any number of agents | Routes channels to isolated agents | Isolated subagents and named bots | — |
+| Isolation | Docker container and image per agent | Host by default, optional Docker sandbox | Local, Docker, SSH or cloud backends | One Docker Compose stack |
+| Tasks and state | Markdown files in folders | Workspace files and Gateway sessions | `MEMORY.md`, `USER.md`, SQLite search | — |
+| Git versioning | Automatic | — | — | — |
+| Cron | Markdown files per agent | Yes | Yes | Yes |
+| Channels | TUI, web, Telegram | CLI, TUI, web, 20+ chat apps, native apps | CLI, desktop, 20+ chat apps | Web, email, CalDAV |
+| Harness | Pi | Pluggable (Claude, Codex, local) | Own | — |
+| Install | `docker compose up` | Install script or npm | Install script | `docker compose up` |
+| License | MIT | MIT | MIT | AGPL-3.0 |
+
+— means not built in or not documented, as of November 2026.
+
+¹ Non-blank source lines from each repo, without tests, generated code or dependencies. agentFS builds on Pi, which isn't counted.<br>
+² Each project's default Docker setup, with no channels or models configured, after 3 minutes idle on Docker Desktop (arm64). Memory is from `docker stats`, disk is the images it pulls or builds.
+
 ## License
 Licensed under [MIT](LICENSE)
 
+[openclaw]: https://github.com/openclaw/openclaw
+[hermes]: https://github.com/NousResearch/hermes-agent
+[odysseus]: https://github.com/odysseus-dev/odysseus
 [llm]: https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/providers.md
 [daily-poem]: data/agents/poem/cron/daily-poem.md
