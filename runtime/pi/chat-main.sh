@@ -21,18 +21,18 @@ case "$conversation" in
 esac
 
 # Only one writer may open a saved Pi session at a time.
-mkdir -p /run/agent-fs/locks
-lock=/run/agent-fs/locks/$conversation
+mkdir -p /run/shoebox/locks
+lock=/run/shoebox/locks/$conversation
 until mkdir "$lock" 2>/dev/null; do sleep 1; done
 trap 'rmdir "$lock"' EXIT
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
 printf '%s' "$text" | docker exec -i \
-    -e "AGENT_FS_CONVERSATION=$conversation" main-chat sh -c '
+    -e "SHOEBOX_CONVERSATION=$conversation" main-chat sh -c '
         if [ -d /agent/home/.pi/bridge-sessions ] && [ ! -e /agent/home/.pi/channel-sessions ]; then
             mv /agent/home/.pi/bridge-sessions /agent/home/.pi/channel-sessions
         fi
         mkdir -p /agent/home/.pi/channel-sessions
-        exec agent-run --print --session "/agent/home/.pi/channel-sessions/$AGENT_FS_CONVERSATION.jsonl"
+        exec agent-run --print --session "/agent/home/.pi/channel-sessions/$SHOEBOX_CONVERSATION.jsonl"
     '

@@ -1,8 +1,8 @@
-name: agentFS
-version: "0.3.0"
-slug: agent_fs
+name: shoebox
+version: "0.4.0"
+slug: shoebox
 description: Filesystem-based orchestration for AI agents
-url: https://github.com/ameesme/agent-fs
+url: https://github.com/ameesme/shoebox
 arch:
   - amd64
   - aarch64
@@ -12,7 +12,7 @@ stage: experimental
 ingress: true
 ingress_port: 8080
 panel_icon: mdi:robot
-panel_title: agentFS
+panel_title: shoebox
 # Device access and Linux capabilities are separate Supervisor settings.
 full_access: true
 apparmor: false

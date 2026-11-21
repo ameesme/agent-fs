@@ -4,7 +4,7 @@
 # back to main, so delegation does not keep a chat request open.
 set -eu
 
-mkdir -p /run/agent-fs/outbox /data/.builds /data/.updates /data/.inbox
+mkdir -p /run/shoebox/outbox /data/.builds /data/.updates /data/.inbox
 docker rm -f main-chat >/dev/null 2>&1 || true
 
 # Optional channels are separate commands, passed through by Compose.
@@ -63,7 +63,7 @@ notify_update() {
     fi
 
     update_number=$((update_number + 1))
-    notify_outbox=/run/agent-fs/outbox/$notify_conversation
+    notify_outbox=/run/shoebox/outbox/$notify_conversation
     mkdir -p "$notify_outbox"
     printf '%s\n' "$notify_text" > "$notify_outbox/.update.tmp"
     mv "$notify_outbox/.update.tmp" "$notify_outbox/$(printf '%012d' "$update_number").txt"

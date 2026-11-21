@@ -47,7 +47,7 @@ image and starts workers when tasks arrive. Don't create a task just to start
 an agent unless the user requested work for it.
 
 Worker changes take effect on its next container launch. Changes to main's
-configuration or mounts require restarting agentFS. Don't interrupt running
+configuration or mounts require restarting shoebox. Don't interrupt running
 work to apply changes.
 If a restart is required, explicitly tell the user why and provide
 `docker compose restart agents` as the next step. Don't imply the changes are

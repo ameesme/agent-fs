@@ -1,4 +1,4 @@
-# agentFS
+# shoebox
 
 Simple, filesystem-based orchestration for AI agents.
 
@@ -19,7 +19,7 @@ Tasks are Markdown files in that agent's `kanban/` folder. Moving a task between
 `todo`, `in-progress`, `done` and `blocked` changes the task's status.
 
 `main` stays available for chat and delegates work by creating task files.
-agentFS starts agent containers as tasks arrive. When a task finishes or gets
+shoebox starts agent containers as tasks arrive. When a task finishes or gets
 blocked, `main` is notified and reports back to you.
 
 ## Getting started
@@ -56,7 +56,7 @@ An agent needs just `agent.json` and a `Dockerfile`. Everything else is optional
 
 **agent.json**
 
-`agent.json` is agentFS's configuration for Pi. It defines the agent's
+`agent.json` is shoebox's configuration for Pi. It defines the agent's
 instructions, tools, skills and optional model. Customize its `soul.md` and
 `skills/` as needed.
 
@@ -66,7 +66,7 @@ Use `FROM agent-base` for Pi, Python and the task runtime. Add any other
 software your agent needs, for example, the included code agent adds Claude Code, tmux and
 Chromium.
 
-agentFS creates workspace, memory and task folders, and builds the agent's
+shoebox creates workspace, memory and task folders, and builds the agent's
 image. It rebuilds the image when its Dockerfile or the base image definition changes.
 
 ## Cron
@@ -80,7 +80,7 @@ Define recurring tasks as Markdown files in each worker's `cron/` folder. Ask
 - `data/shared/skills/`: common skills; an agent's own skills override matching
   names
 - Shared files also live here and stay ignored by Git
-- Restart agentFS after changing main's credentials or shared skills
+- Restart shoebox after changing main's credentials or shared skills
 
 ## Channels
 
@@ -97,7 +97,7 @@ Each Telegram chat has its own conversation; `/new` or `/reset` starts a fresh
 one. Speech-to-text is enabled by including an `OPENAI_API_KEY` in your .env.
 
 ## Home Assistant
-agentFS comes with a preconfigured Home Assistant app you can find under `/environments`, 
+shoebox comes with a preconfigured Home Assistant app you can find under `/environments`, 
 which can be installed by adding this repository as a custom app installation. Refer to
 the instructions for further details.
 

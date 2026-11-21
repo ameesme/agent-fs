@@ -1,18 +1,18 @@
-# agentFS for Home Assistant
+# shoebox for Home Assistant
 
-[![Add agentFS to Home Assistant](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Fameesme%2Fagent-fs)
+[![Add shoebox to Home Assistant](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Fameesme%2Fshoebox)
 
 This optional app is isolated in `environments/home-assistant/`. Its image fetches the core
-at the commit pinned by `AGENT_FS_REF` in this folder's Dockerfile, so Supervisor
+at the commit pinned by `SHOEBOX_REF` in this folder's Dockerfile, so Supervisor
 can build from this folder without changing the core Dockerfile or runtime.
 Home Assistant requires `repository.yaml` at the repository root to recognize
 the repository; the app itself stays in this folder.
 
 Requires Home Assistant OS with the app store (formerly add-ons).
 
-1. Add `https://github.com/ameesme/agent-fs` under **Settings → Apps →
-   App store → ⋮ → Repositories**, then install **agentFS**.
-2. Turn off **Protection mode** on the app's Info tab. agentFS needs privileged
+1. Add `https://github.com/ameesme/shoebox` under **Settings → Apps →
+   App store → ⋮ → Repositories**, then install **shoebox**.
+2. Turn off **Protection mode** on the app's Info tab. shoebox needs privileged
    Docker-in-Docker, as it does in Compose. It uses its own Docker daemon;
    it does not connect to Home Assistant's Docker socket.
    The app also requests explicit Linux capabilities for mounts, container
@@ -40,6 +40,6 @@ unchanged. Configuration entries in `environment` generate
 Use single-line, unquoted values, as with Docker env files.
 
 Telegram is optional; leave both Telegram fields empty to run only scheduled
-tasks. The agentFS sidebar panel has per-agent chat and a file explorer for
+tasks. The shoebox sidebar panel has per-agent chat and a file explorer for
 agent and shared files, behind Home Assistant's login. The existing Compose installation
 and CLI continue to work as before.

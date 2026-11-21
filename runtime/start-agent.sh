@@ -44,7 +44,7 @@ fi
 if [ "$name" = main ]; then
     set -- "$@" -v /data:/data \
         -e GIT_AUTHOR_NAME=main -e GIT_COMMITTER_NAME=main \
-        -e GIT_AUTHOR_EMAIL=main@agent-fs.local -e GIT_COMMITTER_EMAIL=main@agent-fs.local
+        -e GIT_AUTHOR_EMAIL=main@shoebox.local -e GIT_COMMITTER_EMAIL=main@shoebox.local
 else
     set -- "$@" -v "$agent/kanban:/agent/kanban" \
         -v "$agent/kanban/backlog:/agent/kanban/backlog:ro" \

@@ -3,18 +3,18 @@
 import { readFileSync } from 'node:fs';
 import { spawn } from 'node:child_process';
 
-const configPath = process.env.AGENT_FS_CONFIG || '/agent/agent.json';
+const configPath = process.env.SHOEBOX_CONFIG || '/agent/agent.json';
 const config = JSON.parse(readFileSync(configPath, 'utf8'));
 const model = process.env.PI_MODEL || config.model;
 
-// Load only the resources declared by agentFS, rather than discovering them.
+// Load only the resources declared by shoebox, rather than discovering them.
 const piArguments = [
   '--no-extensions',
   '--no-mcp',
   '--no-context-files',
   '--no-prompt-templates',
   '--no-skills',
-  '--extension', '/usr/local/lib/agent-fs/agentFS.mjs',
+  '--extension', '/usr/local/lib/shoebox/shoebox.mjs',
   '--system-prompt', config.instruction,
   '--tools', config.tools.join(','),
 ];

@@ -5,14 +5,14 @@ set -eu
 mount -o remount,rw cgroup2 /sys/fs/cgroup
 mount -o remount,bind,rw proc /proc/sys
 # Home Assistant owns shared credentials; agent-specific .env files still win.
-if [ ! -f /data/.agent-fs-initialized ]; then
-    (cd /etc/agent-fs-defaults && find . -type f) | while IFS= read -r file; do
+if [ ! -f /data/.shoebox-initialized ]; then
+    (cd /etc/shoebox-defaults && find . -type f) | while IFS= read -r file; do
         mkdir -p "/data/${file%/*}"
         if [ ! -e "/data/$file" ]; then
-            cp "/etc/agent-fs-defaults/$file" "/data/$file"
+            cp "/etc/shoebox-defaults/$file" "/data/$file"
         fi
     done
-    touch /data/.agent-fs-initialized
+    touch /data/.shoebox-initialized
 fi
 
 # Docker env files are single-line KEY=value entries. Never evaluate values as shell.

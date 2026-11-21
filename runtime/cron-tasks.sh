@@ -58,7 +58,7 @@ if [ "$#" -eq 2 ]; then
     exit 0
 fi
 
-spool=/run/agent-fs/cron
+spool=/run/shoebox/cron
 mkdir -p "$spool"
 : > "$spool/root"
 crond -f -d 8 -c "$spool" &

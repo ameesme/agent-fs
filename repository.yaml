@@ -1,4 +1,4 @@
 # Home Assistant requires repository metadata at the repository root.
-name: agentFS
-url: https://github.com/ameesme/agent-fs
+name: shoebox
+url: https://github.com/ameesme/shoebox
 maintainer: Mees Boeijen
