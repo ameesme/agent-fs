@@ -87,10 +87,10 @@ function expandEnv(value) {
   return value;
 }
 
-export default function agentFs(pi) {
-  const configPath = process.env.AGENT_FS_CONFIG || '/agent/agent.json';
+export default function shoebox(pi) {
+  const configPath = process.env.SHOEBOX_CONFIG || '/agent/agent.json';
   const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-  const inboxRoot = process.env.AGENT_FS_INBOX || '/data/.inbox';
+  const inboxRoot = process.env.SHOEBOX_INBOX || '/data/.inbox';
   for (const [name, server] of Object.entries(config.mcpServers || {})) {
     pi.registerMcpServer(name, expandEnv(server));
   }
@@ -98,7 +98,7 @@ export default function agentFs(pi) {
 
   pi.on('before_agent_start', (event, context) => {
     const sessionId = context.sessionManager.getSessionId();
-    const conversationId = process.env.AGENT_FS_CONVERSATION || `native-${sessionId}`;
+    const conversationId = process.env.SHOEBOX_CONVERSATION || `native-${sessionId}`;
     const instructions = [
       event.systemPrompt,
       '',
@@ -146,13 +146,13 @@ export default function agentFs(pi) {
   pi.on('session_start', (_event, context) => {
     clearInterval(updateTimer);
 
-    if (process.env.AGENT_FS_NATIVE !== '1') {
+    if (process.env.SHOEBOX_NATIVE !== '1') {
       return;
     }
 
     if (process.env.AGENT_NAME === 'main' && context.hasUI) {
       context.ui.setHeader((_tui, theme) => new Text(
-        `${theme.fg('accent', 'agentFS')}\n\nAvailable agents:\n${describeAgents('/data/agents')}`,
+        `${theme.fg('accent', 'shoebox')}\n\nAvailable agents:\n${describeAgents('/data/agents')}`,
         1, 1,
       ));
     }

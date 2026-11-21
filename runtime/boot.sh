@@ -1,5 +1,5 @@
 #!/bin/sh
-# Boot agentFS: prepare shared folders and Git, then start the folder watcher.
+# Boot shoebox: prepare shared folders and Git, then start the folder watcher.
 # Runs Docker inside the main container so agents get their own containers
 # without needing access to the host's Docker socket.
 set -eu
@@ -11,13 +11,13 @@ mkdir -p /data/agents /data/shared/files
 chmod 1777 /data/shared/files
 # Older versions mounted skills inside agent homes, leaving empty folders behind.
 rmdir /data/agents/*/home/.agents/skills/* /data/agents/*/home/.agents/skills /data/agents/*/home/.agents 2>/dev/null || true
-cp /etc/agent-fs.gitignore /data/.gitignore
+cp /etc/shoebox.gitignore /data/.gitignore
 
 git config --global --add safe.directory /data
 if [ ! -d /data/.git ]; then
     git -C /data init -q
     git -C /data add -A
-    git -C /data -c user.name=main -c user.email=main@agent-fs.local \
+    git -C /data -c user.name=main -c user.email=main@shoebox.local \
         commit -q -m "init: agent filesystem"
 fi
 

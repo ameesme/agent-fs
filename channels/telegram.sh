@@ -218,7 +218,7 @@ $transcript"
         fi
         rm -f "$reply"
     done
-    for message in /run/agent-fs/outbox/telegram-*/*.txt; do
+    for message in /run/shoebox/outbox/telegram-*/*.txt; do
         [ -f "$message" ] || continue
         conversation=${message%/*}
         conversation=${conversation##*/}

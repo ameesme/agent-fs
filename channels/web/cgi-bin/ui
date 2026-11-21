@@ -147,9 +147,9 @@ send() {
 stop() {
     writable "$conversation" || fail 'This session is read-only'
     # Agent images lack pkill, so find the run by its session argument.
-    docker exec -e "AGENT_FS_SESSION=/agent/home/.pi/channel-sessions/$conversation.jsonl" "$agent-chat" sh -c '
+    docker exec -e "SHOEBOX_SESSION=/agent/home/.pi/channel-sessions/$conversation.jsonl" "$agent-chat" sh -c '
         for process in /proc/[0-9]*; do
-            tr "\0" " " < "$process/cmdline" 2>/dev/null | grep -qF -- "--session $AGENT_FS_SESSION" && kill -INT "${process#/proc/}" 2>/dev/null
+            tr "\0" " " < "$process/cmdline" 2>/dev/null | grep -qF -- "--session $SHOEBOX_SESSION" && kill -INT "${process#/proc/}" 2>/dev/null
         done; true' >/dev/null 2>&1 || true
     printf 'Status: 204 No Content\r\n\r\n'
 }
@@ -163,7 +163,7 @@ resolve() {
     path=$(realpath "$entry" 2>/dev/null) || fail 'Not found'
     case "$path" in
         /data/agents|/data/agents/*|/data/shared|/data/shared/*) ;;
-        *) fail 'Outside agentFS files' ;;
+        *) fail 'Outside shoebox files' ;;
     esac
 }
 

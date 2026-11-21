@@ -7,4 +7,4 @@ until [ "$(docker inspect -f '{{.State.Running}}' main-chat 2>/dev/null)" = true
     sleep 2
 done
 
-exec docker exec -it -e AGENT_FS_NATIVE=1 main-chat agent-run "$@"
+exec docker exec -it -e SHOEBOX_NATIVE=1 main-chat agent-run "$@"

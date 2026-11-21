@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.4.0
+
+### Breaking changes
+
+- agentFS is now shoebox. The repo moved to `ameesme/shoebox`, and
+  `AGENT_FS_*` environment variables are now `SHOEBOX_*`.
+- The code agent no longer installs Claude Code, tmux and Chromium.
+  Uncomment them in its Dockerfile if you need them.
+
+### Added
+
+- The README compares shoebox with OpenClaw, Hermes Agent and Odysseus,
+  including lines of code, idle memory and disk use.
+
 ## 0.3.0
 
 ### Breaking changes
@@ -11,7 +25,7 @@
 
 - Web chat supports multiline messages (Shift+Enter), shows sent messages
   immediately, and offers a stop button while a reply is running.
-- Main can restart agentFS, after you confirm it, to apply changes to any
+- Main can restart shoebox, after you confirm it, to apply changes to any
   agent's instructions, skills and credentials. It writes
   `/data/.control/restart`; the runtime recreates every agent container once
   all agents are idle and logs to `/data/.control/restart.log`.

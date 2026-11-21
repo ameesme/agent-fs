@@ -5,8 +5,8 @@
 set -eu
 
 # Locks survive a container restart, but the replies holding them do not.
-rm -rf /run/agent-fs/locks
-mkdir -p /run/agent-fs/outbox /run/agent-fs/locks /data/.builds /data/.updates /data/.inbox /data/.control
+rm -rf /run/shoebox/locks
+mkdir -p /run/shoebox/outbox /run/shoebox/locks /data/.builds /data/.updates /data/.inbox /data/.control
 docker rm -f main-chat >/dev/null 2>&1 || true
 # Booting already starts fresh containers, which applies any pending restart.
 rm -f /data/.control/restart
@@ -32,7 +32,7 @@ restart_agents() {
         return 0
     fi
     # chat-main waits while this lock exists, so no reply starts during the check.
-    lock=/run/agent-fs/locks/.restart
+    lock=/run/shoebox/locks/.restart
     mkdir "$lock" 2>/dev/null || return 0
     if idle; then
         reason=$(sed -n 's/^reason: //p' "$request" | head -n 1)
@@ -46,7 +46,7 @@ restart_agents() {
 
 # Idle means no chat reply, task container or native TUI session is running.
 idle() {
-    for busy in /run/agent-fs/locks/*; do
+    for busy in /run/shoebox/locks/*; do
         [ ! -e "$busy" ] || return 1
     done
     [ -z "$(docker ps -q --filter name=^agent-)" ] || return 1
@@ -100,7 +100,7 @@ notify_update() {
     fi
 
     update_number=$((update_number + 1))
-    notify_outbox=/run/agent-fs/outbox/$notify_conversation
+    notify_outbox=/run/shoebox/outbox/$notify_conversation
     mkdir -p "$notify_outbox"
     printf '%s\n' "$notify_text" > "$notify_outbox/.update.tmp"
     mv "$notify_outbox/.update.tmp" "$notify_outbox/$(printf '%012d' "$update_number").txt"
