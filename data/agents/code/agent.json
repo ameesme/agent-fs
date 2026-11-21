@@ -1,5 +1,5 @@
 {
-  "description": "Writes and changes code with Claude Code, tmux and Chromium",
+  "description": "Writes and changes code; Claude Code, tmux and Chromium are optional in its Dockerfile",
   "tools": [
     "read",
     "bash",

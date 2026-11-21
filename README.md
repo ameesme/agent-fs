@@ -62,7 +62,7 @@ value from the agent's `.env`.
 
 **Dockerfile**
 
-Use `FROM agent-base` for Pi, Python and the task runtime. Add any other software your agent needs, for example, the included code agent adds Claude Code, tmux and Chromium.
+Use `FROM agent-base` for Pi, Python and the task runtime. Add any other software your agent needs, for example, the included code agent can add Claude Code, tmux and Chromium by uncommenting them.
 
 When you start agentFS, it creates each agent's workspace, memory and task folders, and builds the agent's image. It rebuilds the image when its Dockerfile or the base image definition changes.
 
